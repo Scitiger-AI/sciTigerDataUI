@@ -1,6 +1,6 @@
 module.exports = {
     apps: [{
-      name: 'scitiger-core',
+      name: 'scitiger-data',
       script: 'node_modules/next/dist/bin/next',
       args: 'start',
       instances: 'max',

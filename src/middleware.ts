@@ -51,6 +51,7 @@ const publicPaths = [
   '/login',
   '/register',
   '/forgot-password',
+  '/md2wechat',
 ];
 
 export function middleware(request: NextRequest) {

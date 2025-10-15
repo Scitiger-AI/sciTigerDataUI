@@ -203,6 +203,9 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
       text_original: '原始文本',
       markdown_denoised: 'AI去噪Markdown',
       text_denoised: 'AI去噪文本',
+      markdown_rewritten: 'AI重写Markdown',
+      text_rewritten: 'AI重写文本',
+      wechat_html: '微信格式HTML',
     };
     return formatLabels[format] || format;
   };
@@ -382,6 +385,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       text_original: { label: '原始文本', color: 'default' },
       markdown_denoised: { label: 'AI去噪MD', color: 'purple' },
       text_denoised: { label: 'AI去噪文本', color: 'purple' },
+      markdown_rewritten: { label: 'AI重写MD', color: 'magenta' },
+      text_rewritten: { label: 'AI重写文本', color: 'magenta' },
+      wechat_html: { label: '微信HTML', color: 'cyan' },
     };
     
     const formatInfo = formatLabels[format] || { label: format, color: 'default' };

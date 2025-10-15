@@ -13,6 +13,8 @@ import type {
   ArticleRewriteResponse,
   ArticleDeleteRequest,
   ArticleDeleteResponse,
+  MarkdownToWechatResponse,
+  WechatTheme,
 } from '@/types/article';
 
 class ArticleService {
@@ -52,12 +54,20 @@ class ArticleService {
    */
   async getArticleContent(
     articleId: string, 
-    format: ArticleContentFormat = 'markdown'
+    format: ArticleContentFormat = 'markdown',
+    wechatTheme?: string
   ): Promise<ArticleContent> {
     try {
+      const params: any = { format };
+      
+      // 如果是微信格式，添加主题参数
+      if (format === 'wechat_html' && wechatTheme) {
+        params.wechat_theme = wechatTheme;
+      }
+      
       const response = await wechatHttp.get<ArticleContentResponse>(
         `/api/v1/articles/${articleId}/content`,
-        { format }
+        params
       );
       
       // 处理不同格式的响应
@@ -285,6 +295,29 @@ class ArticleService {
       return response.data;
     } catch (error) {
       console.error('删除文章失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Markdown 转微信格式 HTML
+   */
+  async convertMarkdownToWechat(
+    markdownContent: string,
+    theme: ArticleContentFormat extends 'wechat_html' ? WechatTheme : WechatTheme = 'default'
+  ): Promise<MarkdownToWechatResponse> {
+    try {
+      const response = await wechatHttp.post<MarkdownToWechatResponse>(
+        '/api/v1/articles/convert/markdown-to-wechat',
+        {
+          markdown_content: markdownContent,
+          theme,
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Markdown转微信格式失败:', error);
       throw error;
     }
   }

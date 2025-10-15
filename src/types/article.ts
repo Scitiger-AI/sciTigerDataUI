@@ -78,7 +78,19 @@ export type ArticleContentFormat =
   | 'markdown_denoised'
   | 'text_denoised'
   | 'markdown_rewritten'
-  | 'text_rewritten';
+  | 'text_rewritten'
+  | 'wechat_html';
+
+// 微信内容主题类型
+export type WechatTheme = 'default' | 'tech' | 'academic' | 'fresh';
+
+// 微信主题选项
+export const WECHAT_THEME_OPTIONS = [
+  { label: '🎨 简洁清新（蓝色系）', value: 'default', description: '简洁清新的蓝色系主题' },
+  { label: '💻 现代科技（深色代码块）', value: 'tech', description: '现代科技风格，适合技术文章' },
+  { label: '📚 严谨学术（衬线字体）', value: 'academic', description: '严谨学术风格，适合学术文章' },
+  { label: '🌿 清新活泼（绿色系）', value: 'fresh', description: '清新活泼的绿色系主题' },
+] as const;
 
 // 文章内容类型
 export interface ArticleContent {
@@ -192,6 +204,7 @@ export const ARTICLE_CONTENT_FORMAT_OPTIONS = [
   { label: 'AI去噪文本', value: 'text_denoised' },
   { label: 'AI重写Markdown', value: 'markdown_rewritten' },
   { label: 'AI重写文本', value: 'text_rewritten' },
+  { label: '微信格式HTML', value: 'wechat_html' },
 ] as const;
 
 // 文章删除请求参数类型
@@ -219,5 +232,28 @@ export interface ArticleDeleteResponse {
   success: boolean;
   message: string;
   data: ArticleDeleteData;
+  error_code: string | null;
+}
+
+// Markdown 转微信格式请求参数类型
+export interface MarkdownToWechatRequest {
+  markdown_content: string;
+  theme?: WechatTheme;
+}
+
+// Markdown 转微信格式响应数据类型
+export interface MarkdownToWechatData {
+  html_content: string;
+  theme: WechatTheme;
+  content_length: number;
+  html_length: number;
+  processed_at: string;
+}
+
+// Markdown 转微信格式响应类型
+export interface MarkdownToWechatResponse {
+  success: boolean;
+  message: string;
+  data: MarkdownToWechatData;
   error_code: string | null;
 }

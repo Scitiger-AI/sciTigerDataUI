@@ -33,10 +33,12 @@ import {
   SyncOutlined,
   TeamOutlined,
   DownloadOutlined,
+  WechatOutlined,
 } from '@ant-design/icons';
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer';
+import WechatHtmlRenderer from '@/components/ui/WechatHtmlRenderer';
 import { articleService } from '@/services/article';
-import type { Article, ArticleContentFormat, ArticleDenoiseRequest, ArticleRewriteRequest } from '@/types/article';
+import type { Article, ArticleContentFormat, ArticleDenoiseRequest, ArticleRewriteRequest, WechatTheme } from '@/types/article';
 
 const { Title, Text, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -66,6 +68,10 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({
   const [rewriteLoading, setRewriteLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('markdown_original');
   
+  // 微信主题状态
+  const [wechatTheme, setWechatTheme] = useState<WechatTheme>('default');
+  const [wechatContentLoading, setWechatContentLoading] = useState(false);
+  
   // 内容状态
   const [contents, setContents] = useState<Record<ArticleContentFormat, string>>({
     markdown: '',
@@ -77,6 +83,7 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({
     text_denoised: '',
     markdown_rewritten: '',
     text_rewritten: '',
+    wechat_html: '',
   });
 
   // 加载文章详情
@@ -116,6 +123,32 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({
     }
   }, [articleId, messageApi]);
 
+  // 加载微信格式内容
+  const loadWechatContent = useCallback(async (theme: WechatTheme = wechatTheme) => {
+    try {
+      setWechatContentLoading(true);
+      const content = await articleService.getArticleContent(articleId, 'wechat_html', theme);
+      if (content) {
+        setContents(prev => ({
+          ...prev,
+          wechat_html: content.content,
+        }));
+        // messageApi.success(`已切换至${theme}主题`);
+      }
+    } catch (error) {
+      console.error('加载微信格式内容失败:', error);
+      messageApi.error('加载微信格式内容失败');
+    } finally {
+      setWechatContentLoading(false);
+    }
+  }, [articleId, wechatTheme, messageApi]);
+
+  // 处理微信主题切换
+  const handleWechatThemeChange = useCallback((theme: WechatTheme) => {
+    setWechatTheme(theme);
+    loadWechatContent(theme);
+  }, [loadWechatContent]);
+
   // 加载所有内容格式
   const loadAllContents = useCallback(async () => {
     try {
@@ -148,14 +181,20 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({
         return acc;
       }, {} as Record<ArticleContentFormat, string>);
 
-      setContents(newContents);
+      setContents(prev => ({
+        ...prev,
+        ...newContents,
+      }));
+      
+      // 同时加载微信格式内容
+      loadWechatContent();
     } catch (error) {
       console.error('加载文章内容失败:', error);
       messageApi.error('加载文章内容失败');
     } finally {
       setContentLoading(false);
     }
-  }, [articleId, messageApi]);
+  }, [articleId, messageApi, loadWechatContent]);
 
   // AI去噪处理
   const handleDenoise = async (forceReprocess: boolean = false) => {
@@ -469,6 +508,25 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({
           title="Markdown原文"
           showActions={true}
           enableSourceView={true}
+        />
+      ),
+    },
+    {
+      key: 'wechat_html',
+      label: (
+        <Space>
+          <WechatOutlined style={{ color: '#07c160' }} />
+          微信格式内容
+        </Space>
+      ),
+      children: (
+        <WechatHtmlRenderer
+          content={contents.wechat_html}
+          articleId={articleId}
+          currentTheme={wechatTheme}
+          onThemeChange={handleWechatThemeChange}
+          onRefresh={() => loadWechatContent()}
+          loading={wechatContentLoading}
         />
       ),
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, Suspense } from 'react';
 import { 
   Row, 
   Col, 
@@ -45,7 +45,8 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 const { RangePicker } = DatePicker;
 
-export default function WechatPage() {
+// 内部组件，使用 useSearchParams
+function WechatPageContent() {
   const { modal } = App.useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -680,5 +681,25 @@ export default function WechatPage() {
         />
       </div>
     </MainLayout>
+  );
+}
+
+// 导出的主组件，使用 Suspense 包裹
+export default function WechatPage() {
+  return (
+    <Suspense fallback={
+      <MainLayout fullWidth>
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '400px' 
+        }}>
+          <Spin size="large" />
+        </div>
+      </MainLayout>
+    }>
+      <WechatPageContent />
+    </Suspense>
   );
 }

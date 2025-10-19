@@ -38,7 +38,7 @@ import { VERIFY_STATUS_OPTIONS, CUSTOMER_TYPE_OPTIONS } from '@/types/wechat';
 import { ARTICLE_SORT_OPTIONS, ARTICLE_SORT_ORDER_OPTIONS } from '@/types/article';
 import type { WechatAccount, WechatAccountQuery } from '@/types/wechat';
 import type { Article, ArticleQuery } from '@/types/article';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -48,9 +48,14 @@ const { RangePicker } = DatePicker;
 export default function WechatPage() {
   const { modal } = App.useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   // 视图模式：'accounts' | 'articles'
-  const [viewMode, setViewMode] = useState<'accounts' | 'articles'>('accounts');
+  // 从 URL 参数初始化视图模式
+  const [viewMode, setViewMode] = useState<'accounts' | 'articles'>(() => {
+    const viewParam = searchParams.get('view');
+    return viewParam === 'articles' ? 'articles' : 'accounts';
+  });
   
   // 公众号数据管理
   const {
@@ -106,6 +111,15 @@ export default function WechatPage() {
   const accountsSentinelRef = useRef<HTMLDivElement>(null);
   const articlesListRef = useRef<HTMLDivElement>(null);
   const articlesSentinelRef = useRef<HTMLDivElement>(null);
+
+  // 监听 URL 参数变化，同步视图模式
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    const newViewMode = viewParam === 'articles' ? 'articles' : 'accounts';
+    if (newViewMode !== viewMode) {
+      setViewMode(newViewMode);
+    }
+  }, [searchParams, viewMode]);
 
   // 公众号视图 - 无限滚动观察器
   useEffect(() => {
@@ -345,6 +359,23 @@ export default function WechatPage() {
     searchArticles(query);
   }, [searchArticles]);
 
+  // 切换视图模式（同步更新 URL）
+  const handleViewModeChange = useCallback((value: string | number) => {
+    const newViewMode = value as 'accounts' | 'articles';
+    setViewMode(newViewMode);
+    
+    // 更新 URL 参数
+    const params = new URLSearchParams(searchParams.toString());
+    if (newViewMode === 'articles') {
+      params.set('view', 'articles');
+    } else {
+      params.delete('view'); // 默认视图不需要参数
+    }
+    
+    const queryString = params.toString();
+    router.push(`/crawler-data/wechat${queryString ? '?' + queryString : ''}`);
+  }, [router, searchParams]);
+
   // 查看文章详情
   const handleArticleView = useCallback((article: Article) => {
     router.push(`/crawler-data/wechat/articles/${article.id}`);
@@ -384,7 +415,7 @@ export default function WechatPage() {
                 {/* 视图切换 */}
                 <Segmented
                   value={viewMode}
-                  onChange={(value) => setViewMode(value as 'accounts' | 'articles')}
+                  onChange={handleViewModeChange}
                   options={[
                     {
                       label: (

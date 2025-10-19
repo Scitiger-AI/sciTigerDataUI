@@ -15,6 +15,7 @@ export interface Article {
   html_path?: string;
   ai_denoised: boolean;
   ai_rewritten: boolean;
+  published_by?: string[];
   created_at: string;
   crawl_time?: string;
 }

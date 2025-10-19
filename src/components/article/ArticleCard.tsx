@@ -10,6 +10,7 @@ import {
   RobotOutlined,
   LinkOutlined,
   DeleteOutlined,
+  RetweetOutlined,
 } from '@ant-design/icons';
 import type { Article } from '@/types/article';
 import { articleService } from '@/services/article';
@@ -313,6 +314,23 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               </Tag>
             )}
           </Space>
+
+          {/* 二次发布信息 */}
+          {article.published_by && article.published_by.length > 0 && (
+            <div style={{ marginTop: '4px' }}>
+              <Space size={4} wrap>
+                <RetweetOutlined style={{ color: '#722ed1', fontSize: '12px' }} />
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  已发布至：
+                </Text>
+                {article.published_by.map((account, index) => (
+                  <Tag key={index} color="purple" style={{ margin: '2px', fontSize: '11px' }}>
+                    {account}
+                  </Tag>
+                ))}
+              </Space>
+            </div>
+          )}
         </Space>
 
         {/* 爬取时间 - 推到底部 */}

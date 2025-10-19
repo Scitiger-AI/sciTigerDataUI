@@ -34,6 +34,7 @@ import {
   TeamOutlined,
   DownloadOutlined,
   WechatOutlined,
+  RetweetOutlined,
 } from '@ant-design/icons';
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer';
 import WechatHtmlRenderer from '@/components/ui/WechatHtmlRenderer';
@@ -702,6 +703,23 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({
                   </Space>
                 </Space>
               </Col>
+
+              {/* 二次发布信息 */}
+              {article.published_by && article.published_by.length > 0 && (
+                <Col xs={24}>
+                  <Space size="small" align="start">
+                    <RetweetOutlined style={{ color: '#722ed1', marginTop: '4px' }} />
+                    <Text strong>二次发布至:</Text>
+                    <Space size="small" wrap>
+                      {article.published_by.map((account, index) => (
+                        <Tag key={index} color="purple" icon={<WechatOutlined />}>
+                          {account}
+                        </Tag>
+                      ))}
+                    </Space>
+                  </Space>
+                </Col>
+              )}
             </Row>
 
             <Divider />

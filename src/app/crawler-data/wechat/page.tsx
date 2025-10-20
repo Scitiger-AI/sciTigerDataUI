@@ -87,7 +87,15 @@ function WechatPageContent() {
     loadMore: loadMoreArticles,
     refresh: refreshArticles,
     search: searchArticles,
-  } = useArticles({ autoLoad: true });
+  } = useArticles({ 
+    autoLoad: true,
+    initialQuery: {
+      is_crawled: true,
+      sort_by: 'post_time',
+      sort_order: 'desc',
+      page_size: 20,
+    },
+  });
 
   // 公众号视图 - UI状态管理
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -105,7 +113,7 @@ function WechatPageContent() {
   const [sortBy, setSortBy] = useState('post_time');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
-  const [isCrawledFilter, setIsCrawledFilter] = useState<boolean | undefined>(undefined);
+  const [isCrawledFilter, setIsCrawledFilter] = useState<boolean | undefined>(true);
 
   // 无限滚动相关
   const accountsListRef = useRef<HTMLDivElement>(null);
@@ -281,6 +289,7 @@ function WechatPageContent() {
       sort_by: sortBy,
       sort_order: sortOrder,
       is_crawled: isCrawledFilter,
+      page_size: 20,
     };
 
     if (dateRange && dateRange[0] && dateRange[1]) {
@@ -351,11 +360,13 @@ function WechatPageContent() {
     setSortBy('post_time');
     setSortOrder('desc');
     setDateRange(null);
-    setIsCrawledFilter(undefined);
+    setIsCrawledFilter(true);
     
     const query: ArticleQuery = {
+      is_crawled: true,
       sort_by: 'post_time',
       sort_order: 'desc',
+      page_size: 20,
     };
     searchArticles(query);
   }, [searchArticles]);

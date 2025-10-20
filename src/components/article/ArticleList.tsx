@@ -52,8 +52,21 @@ const ArticleList: React.FC<ArticleListProps> = ({
   
   // 使用不同的Hook根据是否有accountBiz
   const articlesHook = accountBiz 
-    ? useAccountArticles(accountBiz, { autoLoad: true })
-    : useArticles({ autoLoad: true });
+    ? useAccountArticles(accountBiz, { 
+        autoLoad: true,
+        initialQuery: {
+          page_size: 20,
+        },
+      })
+    : useArticles({ 
+        autoLoad: true,
+        initialQuery: {
+          is_crawled: true,
+          sort_by: 'post_time',
+          sort_order: 'desc',
+          page_size: 20,
+        },
+      });
 
   const {
     articles,
@@ -71,7 +84,7 @@ const ArticleList: React.FC<ArticleListProps> = ({
   const [sortBy, setSortBy] = useState('post_time');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
-  const [isCrawledFilter, setIsCrawledFilter] = useState<boolean | undefined>(undefined);
+  const [isCrawledFilter, setIsCrawledFilter] = useState<boolean | undefined>(accountBiz ? undefined : true);
 
   // 无限滚动相关
   const listRef = useRef<HTMLDivElement>(null);
@@ -106,6 +119,7 @@ const ArticleList: React.FC<ArticleListProps> = ({
       sort_by: sortBy,
       sort_order: sortOrder,
       is_crawled: isCrawledFilter,
+      page_size: 20,
     };
 
     if (dateRange && dateRange[0] && dateRange[1]) {
@@ -180,14 +194,17 @@ const ArticleList: React.FC<ArticleListProps> = ({
     setSortBy('post_time');
     setSortOrder('desc');
     setDateRange(null);
-    setIsCrawledFilter(undefined);
+    const defaultCrawledFilter = accountBiz ? undefined : true;
+    setIsCrawledFilter(defaultCrawledFilter);
     
     const query: ArticleQuery = {
+      is_crawled: defaultCrawledFilter,
       sort_by: 'post_time',
       sort_order: 'desc',
+      page_size: 20,
     };
     search(query);
-  }, [search]);
+  }, [search, accountBiz]);
 
   return (
     <div className={className} style={style}>

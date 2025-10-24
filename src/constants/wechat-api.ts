@@ -12,11 +12,11 @@ export const WECHAT_CLIENT_CONFIG = {
 // 公众号API端点
 export const WECHAT_API_ENDPOINTS = {
   // 公众号管理
-  ACCOUNTS: '/api/v1/accounts',
-  ACCOUNT_DETAIL: (accountId: string) => `/api/v1/accounts/${accountId}`,
-  ACCOUNT_CREATE: '/api/v1/accounts',
-  ACCOUNT_UPDATE: (accountId: string) => `/api/v1/accounts/${accountId}`,
-  ACCOUNT_DELETE: (accountId: string) => `/api/v1/accounts/${accountId}`,
+  ACCOUNTS: '/api/v1/wechat/accounts',
+  ACCOUNT_DETAIL: (accountId: string) => `/api/v1/wechat/accounts/${accountId}`,
+  ACCOUNT_CREATE: '/api/v1/wechat/accounts',
+  ACCOUNT_UPDATE: (accountId: string) => `/api/v1/wechat/accounts/${accountId}`,
+  ACCOUNT_DELETE: (accountId: string) => `/api/v1/wechat/accounts/${accountId}`,
 } as const;
 
 // 默认分页配置

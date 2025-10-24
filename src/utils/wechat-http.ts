@@ -96,7 +96,36 @@ class WechatHttpClient {
       }
 
       if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+        // 提取详细错误信息
+        let errorMessage = `HTTP Error: ${response.status} - ${response.statusText}`;
+        let errorDetail = null;
+        
+        // 尝试从响应体中提取详细错误信息
+        if (data && typeof data === 'object') {
+          // 优先使用 detail 字段（FastAPI 标准错误格式）
+          if ('detail' in data) {
+            errorDetail = (data as any).detail;
+            errorMessage = typeof errorDetail === 'string' 
+              ? errorDetail 
+              : errorMessage;
+          }
+          // 其次使用 message 字段
+          else if ('message' in data) {
+            errorDetail = (data as any).message;
+            errorMessage = typeof errorDetail === 'string' 
+              ? errorDetail 
+              : errorMessage;
+          }
+        }
+        
+        // 创建包含详细信息的错误对象
+        const error: any = new Error(errorMessage);
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.detail = errorDetail;
+        error.data = data;
+        
+        throw error;
       }
 
       return {

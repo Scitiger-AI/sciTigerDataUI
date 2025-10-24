@@ -54,9 +54,9 @@ export const useWechatAccounts = (options: UseWechatAccountsOptions = {}): UseWe
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE_CONFIG.PAGE);
-  const [totalPages, setTotalPages] = useState(0);
+  const [total, setTotal] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(DEFAULT_PAGE_CONFIG.PAGE);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const [currentQuery, setCurrentQuery] = useState<WechatAccountQuery>(initialQuery);
 
   // 计算是否还有更多数据
@@ -130,9 +130,25 @@ export const useWechatAccounts = (options: UseWechatAccountsOptions = {}): UseWe
         message.error(response.message || '创建公众号失败');
         return null;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('创建公众号失败:', error);
-      message.error('创建公众号失败');
+      
+      // 提取详细的错误信息
+      let errorMessage = '创建公众号失败';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.detail) {
+        errorMessage = typeof error.detail === 'string' 
+          ? error.detail 
+          : '创建公众号失败';
+      } else if (error?.data?.detail) {
+        errorMessage = typeof error.data.detail === 'string' 
+          ? error.data.detail 
+          : '创建公众号失败';
+      }
+      
+      message.error(errorMessage);
       return null;
     } finally {
       setCreating(false);
@@ -158,9 +174,25 @@ export const useWechatAccounts = (options: UseWechatAccountsOptions = {}): UseWe
         message.error(response.message || '更新公众号失败');
         return null;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('更新公众号失败:', error);
-      message.error('更新公众号失败');
+      
+      // 提取详细的错误信息
+      let errorMessage = '更新公众号失败';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.detail) {
+        errorMessage = typeof error.detail === 'string' 
+          ? error.detail 
+          : '更新公众号失败';
+      } else if (error?.data?.detail) {
+        errorMessage = typeof error.data.detail === 'string' 
+          ? error.data.detail 
+          : '更新公众号失败';
+      }
+      
+      message.error(errorMessage);
       return null;
     } finally {
       setUpdating(false);
@@ -182,9 +214,25 @@ export const useWechatAccounts = (options: UseWechatAccountsOptions = {}): UseWe
         message.error(response.message || '删除公众号失败');
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('删除公众号失败:', error);
-      message.error('删除公众号失败');
+      
+      // 提取详细的错误信息
+      let errorMessage = '删除公众号失败';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.detail) {
+        errorMessage = typeof error.detail === 'string' 
+          ? error.detail 
+          : '删除公众号失败';
+      } else if (error?.data?.detail) {
+        errorMessage = typeof error.data.detail === 'string' 
+          ? error.data.detail 
+          : '删除公众号失败';
+      }
+      
+      message.error(errorMessage);
       return false;
     } finally {
       setDeleting(false);
@@ -201,9 +249,25 @@ export const useWechatAccounts = (options: UseWechatAccountsOptions = {}): UseWe
         message.error(response.message || '获取公众号详情失败');
         return null;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('获取公众号详情失败:', error);
-      message.error('获取公众号详情失败');
+      
+      // 提取详细的错误信息
+      let errorMessage = '获取公众号详情失败';
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.detail) {
+        errorMessage = typeof error.detail === 'string' 
+          ? error.detail 
+          : '获取公众号详情失败';
+      } else if (error?.data?.detail) {
+        errorMessage = typeof error.data.detail === 'string' 
+          ? error.data.detail 
+          : '获取公众号详情失败';
+      }
+      
+      message.error(errorMessage);
       return null;
     }
   }, [message]);

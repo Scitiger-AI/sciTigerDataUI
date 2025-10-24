@@ -29,6 +29,7 @@ import {
 } from '@/types/task';
 import { taskService } from '@/services/taskService';
 import dayjs from 'dayjs';
+import { formatLocalToUTC } from '@/utils/dateUtils';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -95,7 +96,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         
         // 定时执行时间
         ...(values.schedule_type === 'once' && values.scheduled_time && {
-          scheduled_time: (values.scheduled_time as any).toISOString(),
+          scheduled_time: formatLocalToUTC(values.scheduled_time),
         }),
         
         // Cron表达式

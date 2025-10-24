@@ -29,6 +29,7 @@ import {
   SCHEDULE_TYPE_CONFIG,
 } from '@/types/task';
 import { taskService } from '@/services/taskService';
+import { formatUTCToLocal } from '@/utils/dateUtils';
 import dayjs from 'dayjs';
 
 const { Text } = Typography;
@@ -86,10 +87,9 @@ export const TaskTable: React.FC<TaskTableProps> = ({
     }
   };
 
-  // 格式化时间
+  // 格式化时间 - 将UTC时间转换为本地时区显示
   const formatTime = (timeStr?: string) => {
-    if (!timeStr) return '-';
-    return dayjs(timeStr).format('YYYY-MM-DD HH:mm:ss');
+    return formatUTCToLocal(timeStr);
   };
 
   // 获取执行时间显示
@@ -220,7 +220,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
       width: 140,
       render: (time) => (
         <Text style={{ fontSize: '12px' }}>
-          {formatTime(time)}
+          {dayjs(time).format('YYYY-MM-DD HH:mm:ss')}
         </Text>
       ),
     },

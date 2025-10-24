@@ -24,7 +24,7 @@ class ArticleService {
   async getArticles(query: ArticleQuery = {}): Promise<ArticleListResponse> {
     try {
       const response = await wechatHttp.get<ArticleListResponse>(
-        '/api/v1/articles/',
+        '/api/v1/wechat/articles/',
         query
       );
       return response.data;
@@ -40,7 +40,7 @@ class ArticleService {
   async getArticleDetail(articleId: string): Promise<ArticleDetailResponse> {
     try {
       const response = await wechatHttp.get<ArticleDetailResponse>(
-        `/api/v1/articles/${articleId}`
+        `/api/v1/wechat/articles/${articleId}`
       );
       return response.data;
     } catch (error) {
@@ -66,7 +66,7 @@ class ArticleService {
       }
       
       const response = await wechatHttp.get<ArticleContentResponse>(
-        `/api/v1/articles/${articleId}/content`,
+        `/api/v1/wechat/articles/${articleId}/content`,
         params
       );
       
@@ -225,7 +225,7 @@ class ArticleService {
       const { force_reprocess = false, save_to_file = true } = options;
       
       const response = await wechatHttp.post<ArticleDenoiseResponse>(
-        `/api/v1/articles/${articleId}/denoise`,
+        `/api/v1/wechat/articles/${articleId}/denoise`,
         {
           force_reprocess,
           save_to_file,
@@ -254,7 +254,7 @@ class ArticleService {
       } = options;
       
       const response = await wechatHttp.post<ArticleRewriteResponse>(
-        `/api/v1/articles/${articleId}/rewrite`,
+        `/api/v1/wechat/articles/${articleId}/rewrite`,
         {
           force_reprocess,
           save_to_file,
@@ -289,7 +289,7 @@ class ArticleService {
       });
       
       const response = await wechatHttp.delete<ArticleDeleteResponse>(
-        `/api/v1/articles/${articleId}?${queryParams.toString()}`
+        `/api/v1/wechat/articles/${articleId}?${queryParams.toString()}`
       );
       
       return response.data;
@@ -308,7 +308,7 @@ class ArticleService {
   ): Promise<MarkdownToWechatResponse> {
     try {
       const response = await wechatHttp.post<MarkdownToWechatResponse>(
-        '/api/v1/articles/convert/markdown-to-wechat',
+        '/api/v1/wechat/articles/convert/markdown-to-wechat',
         {
           markdown_content: markdownContent,
           theme,

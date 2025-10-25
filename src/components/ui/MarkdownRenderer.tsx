@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { Card, Typography, Space, Tag, Button, Modal, App } from 'antd';
 import { 
   EyeOutlined, 
@@ -13,6 +15,39 @@ import {
 import type { ArticleContentFormat } from '@/types/article';
 
 const { Text, Paragraph } = Typography;
+
+// 自定义安全的 HTML 标签白名单配置
+// 在默认配置基础上，额外允许视频、音频等多媒体标签
+const customSanitizeSchema = {
+  ...defaultSchema,
+  tagNames: [
+    ...(defaultSchema.tagNames || []),
+    'video',
+    'source',
+    'audio',
+    'track',
+  ],
+  attributes: {
+    ...defaultSchema.attributes,
+    video: [
+      'controls',
+      'width',
+      'height',
+      'preload',
+      'style',
+      'poster',
+      'autoplay',
+      'loop',
+      'muted',
+      'playsinline',
+    ],
+    source: ['src', 'type'],
+    audio: ['controls', 'preload', 'autoplay', 'loop', 'muted'],
+    track: ['kind', 'src', 'srclang', 'label', 'default'],
+    // 允许所有元素使用 style 属性（已在默认配置中，但这里明确声明）
+    '*': [...(defaultSchema.attributes?.['*'] || []), 'style', 'className'],
+  },
+};
 
 interface MarkdownRendererProps {
   content: string;
@@ -83,16 +118,20 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
     // 渲染视图
     switch (format) {
       case 'html':
+      case 'wechat_html':
         return (
           <div 
+            className="wechat-content-wrapper"
             dangerouslySetInnerHTML={{ __html: content }}
             style={{ 
               maxHeight: '60vh', 
-              overflow: 'auto',
+              overflowY: 'auto',
+              overflowX: 'hidden',
               border: '1px solid #f0f0f0',
               borderRadius: '6px',
               padding: '16px',
-              backgroundColor: '#fafafa'
+              backgroundColor: '#fafafa',
+              maxWidth: '100%',
             }}
           />
         );
@@ -122,7 +161,11 @@ const ContentViewer: React.FC<ContentViewerProps> = ({
           <div style={{ maxHeight: '600px', overflow: 'auto' }}>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeHighlight]}
+              rehypePlugins={[
+                rehypeRaw,  // 解析 HTML 标签
+                rehypeHighlight,
+                [rehypeSanitize, customSanitizeSchema],  // 安全过滤
+              ]}
               components={{
                 // 自定义代码块样式
                 code: ({ node, inline, className, children, ...props }) => {
@@ -267,17 +310,20 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
   const [sourceViewerOpen, setSourceViewerOpen] = useState(false);
 
   const renderContent = () => {
-    if (format === 'html') {
+    if (format === 'html' || format === 'wechat_html') {
       return (
         <div 
+          className="wechat-content-wrapper"
           dangerouslySetInnerHTML={{ __html: content }}
           style={{ 
             maxHeight: '400px', 
-            overflow: 'auto',
+            overflowY: 'auto',
+            overflowX: 'hidden',
             border: '1px solid #f0f0f0',
             borderRadius: '6px',
             padding: '16px',
-            backgroundColor: '#fafafa'
+            backgroundColor: '#fafafa',
+            maxWidth: '100%',
           }}
         />
       );
@@ -305,7 +351,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       <div style={{ maxHeight: '400px', overflow: 'auto' }}>
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeHighlight]}
+          rehypePlugins={[
+            rehypeRaw,  // 解析 HTML 标签
+            rehypeHighlight,
+            [rehypeSanitize, customSanitizeSchema],  // 安全过滤
+          ]}
           components={{
             code: ({ node, inline, className, children, ...props }) => {
               const match = /language-(\w+)/.exec(className || '');

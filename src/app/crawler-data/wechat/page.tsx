@@ -32,6 +32,7 @@ import WechatAccountCard from '@/components/wechat/WechatAccountCard';
 import WechatAccountForm from '@/components/wechat/WechatAccountForm';
 import WechatAccountDetail from '@/components/wechat/WechatAccountDetail';
 import ArticleCard from '@/components/article/ArticleCard';
+import SingleArticleCollectForm from '@/components/task/SingleArticleCollectForm';
 import useWechatAccounts from '@/hooks/useWechatAccounts';
 import useArticles from '@/hooks/useArticles';
 import { VERIFY_STATUS_OPTIONS, CUSTOMER_TYPE_OPTIONS } from '@/types/wechat';
@@ -47,7 +48,7 @@ const { RangePicker } = DatePicker;
 
 // 内部组件，使用 useSearchParams
 function WechatPageContent() {
-  const { modal } = App.useApp();
+  const { modal, message } = App.useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -114,6 +115,7 @@ function WechatPageContent() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
   const [isCrawledFilter, setIsCrawledFilter] = useState<boolean | undefined>(true);
+  const [singleArticleFormOpen, setSingleArticleFormOpen] = useState(false);
 
   // 无限滚动相关
   const accountsListRef = useRef<HTMLDivElement>(null);
@@ -398,6 +400,12 @@ function WechatPageContent() {
     refreshArticles();
   }, [refreshArticles]);
 
+  // 单篇文章采集成功处理
+  const handleSingleArticleSuccess = useCallback(() => {
+    setSingleArticleFormOpen(false);
+    // message.success('采集任务已创建，请前往任务列表查看进度');
+  }, [message]);
+
   return (
     <MainLayout fullWidth>
       <div style={{ padding: '24px' }}>
@@ -466,12 +474,21 @@ function WechatPageContent() {
                   </Button>
                 )}
                 {viewMode === 'articles' && (
-                  <Button
-                    icon={<FilterOutlined />}
-                    onClick={handleArticleClearFilters}
-                  >
-                    清空筛选
-                  </Button>
+                  <>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      onClick={() => setSingleArticleFormOpen(true)}
+                    >
+                      采集单篇文章
+                    </Button>
+                    <Button
+                      icon={<FilterOutlined />}
+                      onClick={handleArticleClearFilters}
+                    >
+                      清空筛选
+                    </Button>
+                  </>
                 )}
               </Space>
             </div>
@@ -689,6 +706,14 @@ function WechatPageContent() {
           onCancel={handleDetailClose}
           account={viewingAccount}
           loading={detailLoading}
+        />
+
+        {/* 单篇文章采集表单 */}
+        <SingleArticleCollectForm
+          visible={singleArticleFormOpen}
+          onCancel={() => setSingleArticleFormOpen(false)}
+          onSuccess={handleSingleArticleSuccess}
+          accounts={accounts}
         />
       </div>
     </MainLayout>

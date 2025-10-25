@@ -215,12 +215,7 @@ export default function MarkdownToWechatPage() {
         </Card>
 
         {/* 左右布局 */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 1fr', 
-          gap: '24px',
-          minHeight: '600px',
-        }}>
+        <div className="md2wechat-grid">
           {/* 左侧：Markdown 输入 */}
           <Card 
             title={
@@ -272,7 +267,7 @@ export default function MarkdownToWechatPage() {
                 )}
               </Space>
             }
-            styles={{ body: { padding: '24px', height: 'calc(100% - 57px)', overflow: 'auto' } }}
+            styles={{ body: { padding: '24px', height: 'calc(100% - 57px)', overflow: 'hidden' } }}
           >
             {loading ? (
               <div style={{ 
@@ -289,10 +284,15 @@ export default function MarkdownToWechatPage() {
             ) : htmlContent ? (
               <div 
                 ref={contentRef}
+                className="wechat-content-wrapper"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
                 style={{
                   background: '#fff',
                   minHeight: '100%',
+                  maxHeight: '100%',
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  maxWidth: '100%',
                 }}
               />
             ) : (

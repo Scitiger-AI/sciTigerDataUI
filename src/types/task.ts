@@ -30,6 +30,7 @@ export interface CrawlTask {
   enable_rewrite?: boolean;
   remove_watermark?: boolean;
   enable_proxy: boolean;
+  collect_videos?: boolean;
   
   // 调度配置参数
   schedule_type: ScheduleType;
@@ -75,6 +76,7 @@ export interface CreateTaskRequest {
   enable_rewrite?: boolean;
   remove_watermark?: boolean;
   enable_proxy?: boolean;
+  collect_videos?: boolean;
   
   // 调度配置参数
   schedule_type?: ScheduleType;
@@ -92,6 +94,7 @@ export interface UpdateTaskRequest {
   enable_rewrite?: boolean;
   remove_watermark?: boolean;
   enable_proxy?: boolean;
+  collect_videos?: boolean;
 }
 
 // 任务列表查询参数
@@ -174,6 +177,7 @@ export interface TaskFormData {
   enable_denoise: boolean;
   enable_rewrite?: boolean;
   enable_proxy: boolean;
+  collect_videos?: boolean;
   schedule_type: ScheduleType;
   scheduled_time?: any; // dayjs.Dayjs 对象
   cron_expression?: string;

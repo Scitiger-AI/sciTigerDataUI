@@ -15,6 +15,8 @@ import type {
   ArticleDeleteResponse,
   MarkdownToWechatResponse,
   WechatTheme,
+  ArticleImagesResponse,
+  ArticleVideosResponse,
 } from '@/types/article';
 
 class ArticleService {
@@ -318,6 +320,36 @@ class ArticleService {
       return response.data;
     } catch (error) {
       console.error('Markdown转微信格式失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取文章图片列表
+   */
+  async getArticleImages(articleId: string): Promise<ArticleImagesResponse> {
+    try {
+      const response = await wechatHttp.get<ArticleImagesResponse>(
+        `/api/v1/wechat/articles/${articleId}/images`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('获取文章图片列表失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取文章视频列表
+   */
+  async getArticleVideos(articleId: string): Promise<ArticleVideosResponse> {
+    try {
+      const response = await wechatHttp.get<ArticleVideosResponse>(
+        `/api/v1/wechat/articles/${articleId}/videos`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('获取文章视频列表失败:', error);
       throw error;
     }
   }

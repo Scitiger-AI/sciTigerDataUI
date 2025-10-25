@@ -258,3 +258,51 @@ export interface MarkdownToWechatResponse {
   data: MarkdownToWechatData;
   error_code: string | null;
 }
+
+// 文章图片类型定义
+export interface ArticleImage {
+  id: string;
+  article_id: string;
+  account_id: string;
+  src: string;
+  local_path: string;
+  api_url: string;
+  width: number;
+  height: number;
+  alt: string | null;
+  download_status: 'pending' | 'completed' | 'failed';
+  created_at: string;
+}
+
+// 文章图片列表响应类型
+export interface ArticleImagesResponse {
+  success: boolean;
+  message: string;
+  data: ArticleImage[];
+  error_code: string | null;
+}
+
+// 文章视频类型定义
+export interface ArticleVideo {
+  id: string;
+  article_id: string;
+  video_id: string;
+  url: string;
+  local_path: string;
+  api_url: string;
+  filename: string;
+  size: number;
+  format_id: string;
+  index: number;
+  success: boolean;
+  collected_at: string;
+  created_at: string;
+}
+
+// 文章视频列表响应类型
+export interface ArticleVideosResponse {
+  success: boolean;
+  message: string;
+  data: ArticleVideo[];
+  error_code: string | null;
+}

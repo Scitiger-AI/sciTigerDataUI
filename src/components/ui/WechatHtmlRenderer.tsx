@@ -130,14 +130,17 @@ const WechatContentViewer: React.FC<WechatContentViewerProps> = ({
     return (
       <div 
         ref={contentRef}
+        className="wechat-content-wrapper"
         dangerouslySetInnerHTML={{ __html: content }}
         style={{ 
           maxHeight: '60vh', 
-          overflow: 'auto',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           border: '1px solid #f0f0f0',
           borderRadius: '6px',
           padding: '16px',
-          backgroundColor: '#fafafa'
+          backgroundColor: '#fafafa',
+          maxWidth: '100%',
         }}
       />
     );
@@ -290,14 +293,17 @@ const WechatHtmlRenderer: React.FC<WechatHtmlRendererProps> = ({
       {/* 内容预览 */}
       {content ? (
         <div 
+          className="wechat-content-wrapper"
           dangerouslySetInnerHTML={{ __html: content }}
           style={{ 
             maxHeight: '400px', 
-            overflow: 'auto',
+            overflowY: 'auto',
+            overflowX: 'hidden',
             border: '1px solid #f0f0f0',
             borderRadius: '6px',
             padding: '16px',
-            backgroundColor: '#fafafa'
+            backgroundColor: '#fafafa',
+            maxWidth: '100%',
           }}
         />
       ) : (

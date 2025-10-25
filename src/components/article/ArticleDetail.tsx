@@ -38,6 +38,7 @@ import {
 } from '@ant-design/icons';
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer';
 import WechatHtmlRenderer from '@/components/ui/WechatHtmlRenderer';
+import ArticleMediaViewer from '@/components/article/ArticleMediaViewer';
 import { articleService } from '@/services/article';
 import type { Article, ArticleContentFormat, ArticleDenoiseRequest, ArticleRewriteRequest, WechatTheme } from '@/types/article';
 
@@ -797,6 +798,11 @@ const ArticleDetail: React.FC<ArticleDetailProps> = ({
           </Space>
         </div>
       </Card>
+
+      {/* 媒体资源（图片和视频） */}
+      {article.is_crawled && (
+        <ArticleMediaViewer articleId={articleId} />
+      )}
 
       {/* 文章内容 */}
       {article.is_crawled ? (

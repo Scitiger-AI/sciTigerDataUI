@@ -251,22 +251,27 @@ export const TaskTable: React.FC<TaskTableProps> = ({
             </Tooltip>
           )}
           
-          {record.status !== 'running' && (
-            <Popconfirm
-              title="确认删除"
-              description="确定要删除这个任务吗？"
-              onConfirm={() => handleDeleteTask(record)}
-              okText="确认"
-              cancelText="取消"
-            >
+          <Popconfirm
+            title="确认删除"
+            description={
+              record.status === 'running'
+                ? "该任务正在运行中，删除后将无法恢复，确定要删除吗？"
+                : "确定要删除这个任务吗？"
+            }
+            onConfirm={() => handleDeleteTask(record)}
+            okText="确认"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title={record.status === 'running' ? '删除运行中的任务' : '删除任务'}>
               <Button
                 type="text"
                 size="small"
                 danger
                 icon={<DeleteOutlined />}
               />
-            </Popconfirm>
-          )}
+            </Tooltip>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -348,6 +353,9 @@ export const TaskTable: React.FC<TaskTableProps> = ({
             </Descriptions.Item>
             <Descriptions.Item label="启用代理">
               {selectedTask.enable_proxy ? '开启' : '关闭'}
+            </Descriptions.Item>
+            <Descriptions.Item label="采集视频">
+              {selectedTask.collect_videos ? '开启' : '关闭'}
             </Descriptions.Item>
             <Descriptions.Item label="执行时间">
               {getExecutionTimeDisplay(selectedTask)}

@@ -46,6 +46,83 @@ body {
 }
 
 /* 修复Ant Design与Tailwind的冲突 */
-img, video {
-  max-width: none;
+/* 注意：不要全局覆盖 img 和 video 的 max-width，会导致内容溢出问题 */
+/* 如果需要特定区域的图片不受限制，请使用更具体的选择器 */
+
+/* 微信内容渲染容器样式 */
+.wechat-content-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.wechat-content-wrapper img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 8px auto;
+}
+
+.wechat-content-wrapper table {
+  max-width: 100% !important;
+  overflow-x: auto;
+  display: block;
+  border-collapse: collapse;
+}
+
+.wechat-content-wrapper pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.wechat-content-wrapper code {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.wechat-content-wrapper video {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 8px auto;
+}
+
+/* 处理可能存在的固定宽度内联样式 */
+.wechat-content-wrapper [style*="width"] {
+  max-width: 100% !important;
+}
+
+/* 处理长文本和 URL 溢出 */
+.wechat-content-wrapper p,
+.wechat-content-wrapper div,
+.wechat-content-wrapper span {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* md2wechat 页面的响应式网格布局 */
+.md2wechat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  min-height: 600px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+@media (max-width: 1200px) {
+  .md2wechat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .md2wechat-grid {
+    gap: 16px;
+    min-height: 400px;
+  }
 }

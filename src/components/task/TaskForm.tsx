@@ -82,6 +82,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         enable_denoise: values.enable_denoise,
         enable_rewrite: values.enable_rewrite,
         enable_proxy: values.enable_proxy,
+        collect_videos: values.collect_videos,
         schedule_type: values.schedule_type,
         
         // 公众号标识参数
@@ -153,6 +154,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         enable_denoise: true,
         enable_rewrite: true,
         enable_proxy: true,
+        collect_videos: true,
         schedule_type: 'immediate',
       });
     }
@@ -177,6 +179,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           enable_denoise: true,
           enable_rewrite: true,
           enable_proxy: true,
+          collect_videos: true,
           schedule_type: 'immediate',
         }}
       >
@@ -304,6 +307,17 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   <Form.Item
                     name="enable_proxy"
                     label="启用代理"
+                    valuePropName="checked"
+                  >
+                    <Switch checkedChildren="开启" unCheckedChildren="关闭" />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row gutter={16}>
+                <Col span={6}>
+                  <Form.Item
+                    name="collect_videos"
+                    label="采集视频"
                     valuePropName="checked"
                   >
                     <Switch checkedChildren="开启" unCheckedChildren="关闭" />

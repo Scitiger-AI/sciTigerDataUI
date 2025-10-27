@@ -284,14 +284,15 @@ class ArticleService {
         force_delete = false 
       } = options;
       
-      // 构建查询参数
-      const queryParams = new URLSearchParams({
+      // 构建查询参数对象
+      const queryParams = {
         delete_files: String(delete_files),
         force_delete: String(force_delete),
-      });
+      };
       
       const response = await wechatHttp.delete<ArticleDeleteResponse>(
-        `/api/v1/wechat/articles/${articleId}?${queryParams.toString()}`
+        `/api/v1/wechat/articles/${articleId}`,
+        queryParams
       );
       
       return response.data;

@@ -211,8 +211,11 @@ export async function DELETE(
       return authError;
     }
 
+    // 提取查询参数
+    const queryParams = extractQueryParams(request);
+
     // 调用真实的微信API
-    const response = await wechatServerHttp.delete(apiPath);
+    const response = await wechatServerHttp.delete(apiPath, queryParams);
 
     return NextResponse.json(response.data, { status: response.status });
   } catch (error) {

@@ -139,8 +139,8 @@ class WechatServerHttpClient {
   }
 
   // DELETE 请求
-  async delete<T>(endpoint: string, headers?: Record<string, string>): Promise<HttpResponse<T>> {
-    return this.makeRequest<T>(endpoint, { method: 'DELETE', headers });
+  async delete<T>(endpoint: string, params?: Record<string, any>, headers?: Record<string, string>): Promise<HttpResponse<T>> {
+    return this.makeRequest<T>(endpoint, { method: 'DELETE', params, headers });
   }
 
   // PATCH 请求

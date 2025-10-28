@@ -6,7 +6,7 @@ import wechatServerHttp from '@/utils/wechat-server-http';
  * 这些路径不需要进行身份验证
  */
 const PUBLIC_API_PATHS = [
-  '/api/v1/articles/convert/markdown-to-wechat', // Markdown 转微信格式接口
+  '/api/v1/wechat/articles/convert/markdown-to-wechat', // Markdown 转微信格式接口
 ];
 
 /**

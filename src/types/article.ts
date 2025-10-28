@@ -9,6 +9,7 @@ export interface Article {
   post_time: number;
   word_count: number;
   image_count: number;
+  video_count: number;
   is_crawled: boolean;
   file_path?: string;
   markdown_path?: string;
@@ -186,6 +187,7 @@ export const ARTICLE_SORT_OPTIONS = [
   { label: '爬取时间', value: 'crawl_time' },
   { label: '字数', value: 'word_count' },
   { label: '图片数', value: 'image_count' },
+  { label: '视频数', value: 'video_count' },
 ] as const;
 
 // 文章排序方向选项

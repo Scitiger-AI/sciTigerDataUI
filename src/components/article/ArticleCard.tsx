@@ -11,6 +11,7 @@ import {
   LinkOutlined,
   DeleteOutlined,
   RetweetOutlined,
+  VideoCameraOutlined,
 } from '@ant-design/icons';
 import type { Article } from '@/types/article';
 import { articleService } from '@/services/article';
@@ -287,6 +288,12 @@ const ArticleCard: React.FC<ArticleCardProps> = ({
               <PictureOutlined style={{ color: '#eb2f96' }} />
               <Text type="secondary" style={{ fontSize: '12px' }}>
                 {article.image_count}图
+              </Text>
+            </Space>
+            <Space size={4}>
+              <VideoCameraOutlined style={{ color: '#52c41a' }} />
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                {article.video_count}视频
               </Text>
             </Space>
           </Space>

@@ -1,34 +1,39 @@
-// 抖音API配置
+// 抖音API配置（仅用于服务端API路由）
 export const DOUYIN_API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_DOUYIN_API_BASE_URL || 'http://127.0.0.1:8010',
+  BASE_URL: process.env.SCITIGER_SPIDER_API_BASE_URL || 'http://127.0.0.1:8010',
 } as const;
 
-// 抖音API端点
+// 客户端API配置（通过Next.js API路由代理）
+export const DOUYIN_CLIENT_CONFIG = {
+  BASE_URL: '/api/douyin', // 使用本地API路由
+} as const;
+
+// 抖音API端点（相对于 /api/douyin 代理路由）
 export const DOUYIN_API_ENDPOINTS = {
   // 任务管理
-  TASKS: '/api/v1/douyin/tasks',
-  TASK_DETAIL: (taskId: string) => `/api/v1/douyin/tasks/${taskId}`,
-  TASK_RESULTS: (taskId: string) => `/api/v1/douyin/tasks/results/${taskId}`,
+  TASKS: '/tasks',
+  TASK_DETAIL: (taskId: string) => `/tasks/${taskId}`,
+  TASK_RESULTS: (taskId: string) => `/tasks/results/${taskId}`,
 
   // 视频管理
-  VIDEOS: '/api/v1/douyin/videos',
-  VIDEO_DETAIL: (awemeId: string) => `/api/v1/douyin/videos/${awemeId}`,
-  VIDEO_COMMENTS: (awemeId: string) => `/api/v1/douyin/videos/${awemeId}/comments`,
-  VIDEO_DELETE: (awemeId: string) => `/api/v1/douyin/videos/${awemeId}`,
+  VIDEOS: '/videos',
+  VIDEO_DETAIL: (awemeId: string) => `/videos/${awemeId}`,
+  VIDEO_COMMENTS: (awemeId: string) => `/videos/${awemeId}/comments`,
+  VIDEO_DELETE: (awemeId: string) => `/videos/${awemeId}`,
 
   // 创作者管理
-  CREATORS: '/api/v1/douyin/creators',
-  CREATOR_CREATE: '/api/v1/douyin/creators',
-  CREATOR_DETAIL: (userId: string) => `/api/v1/douyin/creators/${userId}`,
-  CREATOR_DELETE: (userId: string) => `/api/v1/douyin/creators/${userId}`,
+  CREATORS: '/creators',
+  CREATOR_CREATE: '/creators',
+  CREATOR_DETAIL: (userId: string) => `/creators/${userId}`,
+  CREATOR_DELETE: (userId: string) => `/creators/${userId}`,
 
   // 任务管理
-  TASK_DELETE: (taskId: string) => `/api/v1/douyin/tasks/${taskId}`,
+  TASK_DELETE: (taskId: string) => `/tasks/${taskId}`,
 
   // AI 功能（预留）
-  VIDEO_EXTRACT_SCRIPT: (awemeId: string) => `/api/v1/douyin/videos/${awemeId}/extract-script`,
-  VIDEO_DENOISE: (awemeId: string) => `/api/v1/douyin/videos/${awemeId}/denoise`,
-  VIDEO_REWRITE: (awemeId: string) => `/api/v1/douyin/videos/${awemeId}/rewrite`,
+  VIDEO_EXTRACT_SCRIPT: (awemeId: string) => `/videos/${awemeId}/extract-script`,
+  VIDEO_DENOISE: (awemeId: string) => `/videos/${awemeId}/denoise`,
+  VIDEO_REWRITE: (awemeId: string) => `/videos/${awemeId}/rewrite`,
 } as const;
 
 // 默认分页配置

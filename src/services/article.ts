@@ -26,7 +26,7 @@ class ArticleService {
   async getArticles(query: ArticleQuery = {}): Promise<ArticleListResponse> {
     try {
       const response = await wechatHttp.get<ArticleListResponse>(
-        '/api/v1/wechat/articles/',
+        '/articles/',
         query
       );
       return response.data;
@@ -42,7 +42,7 @@ class ArticleService {
   async getArticleDetail(articleId: string): Promise<ArticleDetailResponse> {
     try {
       const response = await wechatHttp.get<ArticleDetailResponse>(
-        `/api/v1/wechat/articles/${articleId}`
+        `/articles/${articleId}`
       );
       return response.data;
     } catch (error) {
@@ -68,7 +68,7 @@ class ArticleService {
       }
       
       const response = await wechatHttp.get<ArticleContentResponse>(
-        `/api/v1/wechat/articles/${articleId}/content`,
+        `/articles/${articleId}/content`,
         params
       );
       
@@ -227,7 +227,7 @@ class ArticleService {
       const { force_reprocess = false, save_to_file = true } = options;
       
       const response = await wechatHttp.post<ArticleDenoiseResponse>(
-        `/api/v1/wechat/articles/${articleId}/denoise`,
+        `/articles/${articleId}/denoise`,
         {
           force_reprocess,
           save_to_file,
@@ -256,7 +256,7 @@ class ArticleService {
       } = options;
       
       const response = await wechatHttp.post<ArticleRewriteResponse>(
-        `/api/v1/wechat/articles/${articleId}/rewrite`,
+        `/articles/${articleId}/rewrite`,
         {
           force_reprocess,
           save_to_file,
@@ -291,7 +291,7 @@ class ArticleService {
       };
       
       const response = await wechatHttp.delete<ArticleDeleteResponse>(
-        `/api/v1/wechat/articles/${articleId}`,
+        `/articles/${articleId}`,
         queryParams
       );
       
@@ -311,7 +311,7 @@ class ArticleService {
   ): Promise<MarkdownToWechatResponse> {
     try {
       const response = await wechatHttp.post<MarkdownToWechatResponse>(
-        '/api/v1/wechat/articles/convert/markdown-to-wechat',
+        '/articles/convert/markdown-to-wechat',
         {
           markdown_content: markdownContent,
           theme,
@@ -331,7 +331,7 @@ class ArticleService {
   async getArticleImages(articleId: string): Promise<ArticleImagesResponse> {
     try {
       const response = await wechatHttp.get<ArticleImagesResponse>(
-        `/api/v1/wechat/articles/${articleId}/images`
+        `/articles/${articleId}/images`
       );
       return response.data;
     } catch (error) {
@@ -346,7 +346,7 @@ class ArticleService {
   async getArticleVideos(articleId: string): Promise<ArticleVideosResponse> {
     try {
       const response = await wechatHttp.get<ArticleVideosResponse>(
-        `/api/v1/wechat/articles/${articleId}/videos`
+        `/articles/${articleId}/videos`
       );
       return response.data;
     } catch (error) {

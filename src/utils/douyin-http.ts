@@ -1,4 +1,4 @@
-import { DOUYIN_API_CONFIG } from '@/constants/douyin-api';
+import { DOUYIN_CLIENT_CONFIG } from '@/constants/douyin-api';
 import { getAccessToken } from '@/utils/storage';
 
 interface HttpRequestOptions {
@@ -16,13 +16,13 @@ interface HttpResponse<T = any> {
 
 /**
  * 抖音HTTP客户端
- * 直接访问sciTigerSpider API
+ * 通过Next.js API路由代理访问sciTigerSpider API
  */
 class DouyinHttpClient {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = DOUYIN_API_CONFIG.BASE_URL;
+    this.baseURL = DOUYIN_CLIENT_CONFIG.BASE_URL;
   }
 
   private getDefaultHeaders(): Record<string, string> {

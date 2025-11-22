@@ -26,6 +26,7 @@ import {
   List,
   Checkbox,
   Divider,
+  DatePicker,
 } from 'antd';
 import {
   PlusOutlined,
@@ -67,6 +68,8 @@ import {
   DOUYIN_COMMENT_SORT_OPTIONS,
   DOUYIN_IMAGE_FORMAT_OPTIONS,
   DOUYIN_VIDEO_FORMAT_OPTIONS,
+  DOUYIN_SCHEDULE_TYPE_OPTIONS,
+  DOUYIN_SCHEDULE_TYPE_CONFIG,
 } from '@/types/douyin';
 
 const { Title, Text, Paragraph } = Typography;
@@ -129,6 +132,7 @@ function DouyinPageContent() {
   const [taskForm] = Form.useForm();
   const [taskCreating, setTaskCreating] = useState(false);
   const [taskType, setTaskType] = useState<'search' | 'detail' | 'creator'>('search');
+  const [scheduleType, setScheduleType] = useState<'immediate' | 'once' | 'cron'>('immediate');
   const [tasksHasMore, setTasksHasMore] = useState(true);
 
   // 无限滚动相关 - 哨兵元素 ref
@@ -195,13 +199,13 @@ function DouyinPageContent() {
               视频标题: {video.title || video.desc || '无标题'}
             </p>
           </div>
-          <Checkbox 
+          <Checkbox
             defaultChecked={true}
             onChange={(e) => { deleteComments = e.target.checked; }}
           >
             同时删除关联的评论数据
           </Checkbox>
-          <Checkbox 
+          <Checkbox
             defaultChecked={false}
             onChange={(e) => { deleteFiles = e.target.checked; }}
           >
@@ -305,7 +309,7 @@ function DouyinPageContent() {
           <div>
             <p style={{ marginBottom: 8 }}>确定要删除创作者"{creator.nickname}"吗？此操作不可恢复。</p>
           </div>
-          <Checkbox 
+          <Checkbox
             defaultChecked={false}
             onChange={(e) => { deleteVideos = e.target.checked; }}
           >
@@ -396,11 +400,18 @@ function DouyinPageContent() {
 
       if (taskType === 'search') {
         const data: CreateDouyinSearchTaskRequest = {
+          name: values.task_name || `搜索任务-${values.keywords}`,
           task_type: 'search',
           keywords: values.keywords,
           publish_time_type: values.publish_time_type || 0,
           max_count: values.max_count || 50,
           start_page: values.start_page || 1,
+
+          // 调度配置
+          schedule_type: values.schedule_type || 'immediate',
+          scheduled_time: values.scheduled_time,
+          cron_expression: values.cron_expression,
+
           comment_config: commentConfig,
           enable_resume: values.enable_resume !== false,
           enable_proxy: values.enable_proxy || false,
@@ -414,10 +425,17 @@ function DouyinPageContent() {
           return;
         }
         response = await douyinService.createDetailTask({
+          name: values.task_name || `详情任务-${awemeIds.length}个视频`,
           task_type: 'detail',
           aweme_ids: awemeIds,
           max_count: values.max_count || awemeIds.length,
           start_page: values.start_page || 1,
+
+          // 调度配置
+          schedule_type: values.schedule_type || 'immediate',
+          scheduled_time: values.scheduled_time,
+          cron_expression: values.cron_expression,
+
           comment_config: commentConfig,
           enable_resume: values.enable_resume !== false,
           enable_proxy: values.enable_proxy || false,
@@ -429,10 +447,17 @@ function DouyinPageContent() {
           return;
         }
         const data: CreateDouyinCreatorTaskRequest = {
+          name: values.task_name || `创作者任务-${values.user_id}`,
           task_type: 'creator',
           user_id: values.user_id,
           max_count: values.max_count || 50,
           start_page: values.start_page || 1,
+
+          // 调度配置
+          schedule_type: values.schedule_type || 'immediate',
+          scheduled_time: values.scheduled_time,
+          cron_expression: values.cron_expression,
+
           comment_config: commentConfig,
           enable_resume: values.enable_resume !== false,
           enable_proxy: values.enable_proxy || false,
@@ -455,7 +480,7 @@ function DouyinPageContent() {
   }, [taskType, taskForm, message, loadTasks]);
 
   const handleDeleteTask = useCallback((task: DouyinTask) => {
-    const taskId = task.task_id;
+    const taskId = task.id;
     if (!taskId) {
       message.error('任务ID不存在');
       return;
@@ -469,9 +494,12 @@ function DouyinPageContent() {
       content: (
         <Space direction="vertical" style={{ width: '100%' }}>
           <div>
-            <p style={{ marginBottom: 8 }}>确定要删除任务"{taskId}"吗？此操作不可恢复。</p>
+            <p style={{ marginBottom: 8 }}>确定要删除任务吗？此操作不可恢复。</p>
+            <p style={{ fontSize: '12px', color: '#999' }}>
+              任务名称: {task.name}
+            </p>
           </div>
-          <Checkbox 
+          <Checkbox
             defaultChecked={false}
             onChange={(e) => { deleteResults = e.target.checked; }}
           >
@@ -494,7 +522,7 @@ function DouyinPageContent() {
           if (response.success) {
             message.success('任务删除成功');
             // 从列表中移除
-            setTasks(prev => prev.filter(t => t.task_id !== taskId));
+            setTasks(prev => prev.filter(t => t.id !== taskId));
             setTasksTotal(prev => Math.max(0, prev - 1));
           } else {
             message.error(response.message || '删除任务失败');
@@ -516,7 +544,7 @@ function DouyinPageContent() {
     let newViewMode: ViewMode = 'videos';
     if (viewParam === 'creators') newViewMode = 'creators';
     else if (viewParam === 'tasks') newViewMode = 'tasks';
-    
+
     if (newViewMode !== viewMode) {
       setViewMode(newViewMode);
     }
@@ -527,7 +555,7 @@ function DouyinPageContent() {
   // 视频视图 - 无限滚动观察器
   useEffect(() => {
     if (viewMode !== 'videos') return;
-    
+
     const sentinel = videosSentinelRef.current;
     if (!sentinel) return;
 
@@ -551,7 +579,7 @@ function DouyinPageContent() {
   // 创作者视图 - 无限滚动观察器
   useEffect(() => {
     if (viewMode !== 'creators') return;
-    
+
     const sentinel = creatorsSentinelRef.current;
     if (!sentinel) return;
 
@@ -575,7 +603,7 @@ function DouyinPageContent() {
   // 任务视图 - 无限滚动观察器
   useEffect(() => {
     if (viewMode !== 'tasks') return;
-    
+
     const sentinel = tasksSentinelRef.current;
     if (!sentinel) return;
 
@@ -600,7 +628,7 @@ function DouyinPageContent() {
   const handleViewModeChange = useCallback((value: string | number) => {
     const newViewMode = value as ViewMode;
     setViewMode(newViewMode);
-    
+
     // 更新 URL 参数
     const params = new URLSearchParams(searchParams.toString());
     if (newViewMode === 'videos') {
@@ -608,7 +636,7 @@ function DouyinPageContent() {
     } else {
       params.set('view', newViewMode);
     }
-    
+
     const queryString = params.toString();
     router.push(`/crawler-data/douyin${queryString ? '?' + queryString : ''}`);
   }, [router, searchParams]);
@@ -853,7 +881,7 @@ function DouyinPageContent() {
 
                     return (
                       <Col key={creator.id || creator.user_id} xs={24} sm={12} lg={8} xl={6}>
-                        <Card 
+                        <Card
                           hoverable
                           onClick={() => router.push(`/crawler-data/douyin/creators/${creator.user_id}?view=creators`)}
                           style={{ cursor: 'pointer' }}
@@ -893,7 +921,7 @@ function DouyinPageContent() {
                                 >
                                   {creator.desc || creator.signature || '暂无简介'}
                                 </Paragraph>
-                                
+
                                 {/* IP属地 */}
                                 {creator.ip_location && (
                                   <div style={{ marginBottom: 8 }}>
@@ -1005,25 +1033,11 @@ function DouyinPageContent() {
                       return num.toLocaleString('zh-CN');
                     };
 
-                    // 获取任务显示标题
-                    const getTaskTitle = () => {
-                      if (task.config?.keywords) {
-                        return `关键词: ${task.config.keywords}`;
-                      }
-                      if (task.config?.user_id) {
-                        return `用户ID: ${task.config.user_id}`;
-                      }
-                      if (task.config?.aweme_ids && task.config.aweme_ids.length > 0) {
-                        return `视频ID: ${task.config.aweme_ids[0]}${task.config.aweme_ids.length > 1 ? ` 等${task.config.aweme_ids.length}个` : ''}`;
-                      }
-                      return `任务ID: ${task.task_id.substring(0, 8)}...`;
-                    };
-
                     return (
-                      <Col key={task.task_id} xs={24} sm={12} lg={8} xl={6}>
-                        <Card 
+                      <Col key={task.id} xs={24} sm={12} lg={8} xl={6}>
+                        <Card
                           hoverable
-                          onClick={() => router.push(`/crawler-data/douyin/tasks/${task.task_id}?view=tasks`)}
+                          onClick={() => router.push(`/crawler-data/douyin/tasks/${task.id}?view=tasks`)}
                           style={{ cursor: 'pointer' }}
                           actions={[
                             <Tooltip key="delete" title="删除任务">
@@ -1052,46 +1066,74 @@ function DouyinPageContent() {
                                   </Tag>
                                 </Space>
                                 <Text strong style={{ fontSize: '14px' }}>
-                                  {getTaskTitle()}
+                                  {task.name}
                                 </Text>
                               </Space>
                             }
                             description={
                               <>
-                                {/* 任务ID */}
-                                <div style={{ marginBottom: 8 }}>
-                                  <Text type="secondary" style={{ fontSize: 11 }}>
-                                    ID: {task.task_id.substring(0, 16)}...
-                                  </Text>
-                                </div>
+                                {/* 任务参数 */}
+                                {task.keywords && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                      关键词: <Text strong>{task.keywords}</Text>
+                                    </Text>
+                                  </div>
+                                )}
+                                {task.creator_id && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                      创作者ID: <Text code>{task.creator_id.substring(0, 20)}...</Text>
+                                    </Text>
+                                  </div>
+                                )}
+                                {task.aweme_ids && task.aweme_ids.length > 0 && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                      视频数: <Text strong>{task.aweme_ids.length}</Text>
+                                    </Text>
+                                  </div>
+                                )}
+
+                                {/* 调度信息 */}
+                                {task.schedule_type && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <Space size="small">
+                                      <Tag color={DOUYIN_SCHEDULE_TYPE_CONFIG[task.schedule_type].color}>
+                                        {DOUYIN_SCHEDULE_TYPE_CONFIG[task.schedule_type].text}
+                                      </Tag>
+                                      {task.schedule_type === 'once' && task.scheduled_time && (
+                                        <Text type="secondary" style={{ fontSize: 11 }}>
+                                          {formatTime(task.scheduled_time)}
+                                        </Text>
+                                      )}
+                                      {task.schedule_type === 'cron' && task.cron_expression && (
+                                        <Text type="secondary" style={{ fontSize: 11 }} code>
+                                          {task.cron_expression}
+                                        </Text>
+                                      )}
+                                    </Space>
+                                  </div>
+                                )}
 
 
                                 {/* 结果统计 */}
-                                {task.results_summary && (
-                                  <Row gutter={8} style={{ marginBottom: 8 }}>
-                                    <Col span={8}>
-                                      <Statistic
-                                        title="视频"
-                                        value={formatNumber(task.results_summary.notes_count)}
-                                        valueStyle={{ fontSize: 14 }}
-                                      />
-                                    </Col>
-                                    <Col span={8}>
-                                      <Statistic
-                                        title="评论"
-                                        value={formatNumber(task.results_summary.comments_count)}
-                                        valueStyle={{ fontSize: 14 }}
-                                      />
-                                    </Col>
-                                    <Col span={8}>
-                                      <Statistic
-                                        title="创作者"
-                                        value={formatNumber(task.results_summary.creators_count)}
-                                        valueStyle={{ fontSize: 14 }}
-                                      />
-                                    </Col>
-                                  </Row>
-                                )}
+                                <Row gutter={8} style={{ marginBottom: 8 }}>
+                                  <Col span={12}>
+                                    <Statistic
+                                      title="当前进度"
+                                      value={formatNumber(task.results_summary.current)}
+                                      valueStyle={{ fontSize: 14 }}
+                                    />
+                                  </Col>
+                                  <Col span={12}>
+                                    <Statistic
+                                      title="总计"
+                                      value={formatNumber(task.results_summary.total)}
+                                      valueStyle={{ fontSize: 14 }}
+                                    />
+                                  </Col>
+                                </Row>
 
                                 {/* 时间信息 */}
                                 <div style={{ marginTop: 8 }}>
@@ -1108,10 +1150,10 @@ function DouyinPageContent() {
                                 )}
 
                                 {/* 错误信息 */}
-                                {task.error && (
+                                {task.error_message && (
                                   <div style={{ marginTop: 8 }}>
                                     <Text type="danger" style={{ fontSize: 11 }} ellipsis>
-                                      {task.error}
+                                      {task.error_message}
                                     </Text>
                                   </div>
                                 )}
@@ -1232,6 +1274,74 @@ function DouyinPageContent() {
               />
             </Form.Item>
 
+            {/* 任务名称 */}
+            <Form.Item
+              label="任务名称"
+              name="task_name"
+              tooltip="为任务设置一个易于识别的名称"
+            >
+              <Input placeholder="留空将自动生成" />
+            </Form.Item>
+
+            <Divider orientation="left">调度配置</Divider>
+
+            {/* 调度类型 */}
+            <Form.Item
+              label="调度类型"
+              name="schedule_type"
+              initialValue="immediate"
+              rules={[{ required: true, message: '请选择调度类型' }]}
+            >
+              <Select
+                onChange={(value) => setScheduleType(value)}
+                options={[...DOUYIN_SCHEDULE_TYPE_OPTIONS]}
+              />
+            </Form.Item>
+
+            {/* 定时执行时间 */}
+            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.schedule_type !== currentValues.schedule_type}>
+              {({ getFieldValue }) =>
+                getFieldValue('schedule_type') === 'once' ? (
+                  <Form.Item
+                    label="执行时间"
+                    name="scheduled_time"
+                    rules={[{ required: true, message: '请选择执行时间' }]}
+                  >
+                    <DatePicker
+                      showTime
+                      format="YYYY-MM-DD HH:mm:ss"
+                      placeholder="请选择执行时间"
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                ) : null
+              }
+            </Form.Item>
+
+            {/* Cron表达式 */}
+            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.schedule_type !== currentValues.schedule_type}>
+              {({ getFieldValue }) =>
+                getFieldValue('schedule_type') === 'cron' ? (
+                  <Form.Item
+                    label="Cron表达式"
+                    name="cron_expression"
+                    rules={[
+                      { required: true, message: '请输入Cron表达式' },
+                      {
+                        pattern: /^(\*|[0-5]?\d)\s+(\*|[01]?\d|2[0-3])\s+(\*|[012]?\d|3[01])\s+(\*|[01]?\d)\s+(\*|[0-6])$/,
+                        message: '请输入有效的Cron表达式（5个字段）'
+                      }
+                    ]}
+                    extra="格式：分 时 日 月 周（例如：0 9 * * * 表示每天早上9点）"
+                  >
+                    <Input placeholder="0 9 * * *" />
+                  </Form.Item>
+                ) : null
+              }
+            </Form.Item>
+
+            <Divider orientation="left">任务参数</Divider>
+
             {/* 搜索任务参数 */}
             {taskType === 'search' && (
               <>
@@ -1336,6 +1446,7 @@ function DouyinPageContent() {
                 </Row>
               </>
             )}
+
 
             <Divider orientation="left">评论配置</Divider>
 

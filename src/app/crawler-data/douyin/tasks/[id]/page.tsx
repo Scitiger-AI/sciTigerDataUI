@@ -73,7 +73,7 @@ function DouyinTaskDetailPageContent() {
     try {
       // 使用 ref 获取当前页码，避免依赖 videosPage 状态
       const currentPage = append ? videosPageRef.current + 1 : 1;
-      
+
       const response = await douyinService.getTaskResults(taskId, currentPage, 20);
 
       if (response.success && response.data) {
@@ -81,12 +81,12 @@ function DouyinTaskDetailPageContent() {
         const total = response.data.total || 0;
         setVideos(prev => append ? [...prev, ...newVideos] : newVideos);
         setVideosTotal(total);
-        
+
         // 更新页码状态和 ref
         const nextPage = append ? currentPage : 1;
         setVideosPage(nextPage);
         videosPageRef.current = nextPage;
-        
+
         // 判断是否还有更多数据
         const currentCount = append ? videos.length + newVideos.length : newVideos.length;
         setVideosHasMore(newVideos.length === 20 && currentCount < total);
@@ -194,11 +194,11 @@ function DouyinTaskDetailPageContent() {
   if (loading) {
     return (
       <MainLayout>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '400px' 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px'
         }}>
           <Spin size="large" tip="加载中...">
             <div style={{ padding: '50px', background: '#f5f5f5', minWidth: '200px' }}>
@@ -227,28 +227,28 @@ function DouyinTaskDetailPageContent() {
     <MainLayout>
       <div style={{ padding: '24px' }}>
         {/* 页面头部 */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '24px',
           padding: '24px 0'
         }}>
           <Space size="middle">
-            <Button 
-              icon={<ArrowLeftOutlined />} 
+            <Button
+              icon={<ArrowLeftOutlined />}
               onClick={handleGoBack}
             >
               返回列表
             </Button>
             <Title level={3} style={{ margin: 0 }}>
-              任务详情 - {task.task_id.substring(0, 8)}...
+              任务详情 - {task.name}
             </Title>
           </Space>
-          
+
           <Space>
-            <Button 
-              icon={<ReloadOutlined />} 
+            <Button
+              icon={<ReloadOutlined />}
               onClick={handleRefresh}
               loading={refreshing}
             >
@@ -309,11 +309,11 @@ export default function DouyinTaskDetailPage() {
   return (
     <Suspense fallback={
       <MainLayout>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '400px' 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px'
         }}>
           <Spin size="large" tip="加载中...">
             <div style={{ padding: '50px', background: '#f5f5f5', minWidth: '200px' }}>

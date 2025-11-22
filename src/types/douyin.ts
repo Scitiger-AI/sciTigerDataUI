@@ -195,97 +195,46 @@ export type DouyinTaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 
 // 任务类型
 export type DouyinTaskType = 'search' | 'detail' | 'creator';
 
+// 调度类型
+export type DouyinScheduleType = 'immediate' | 'once' | 'cron';
+
 // 抖音任务
 export interface DouyinTask {
-  task_id: string;
+  id: string;  // 任务ID
+  name: string;  // 任务名称
   task_type: DouyinTaskType;
   status: DouyinTaskStatus;
-  platform?: string;
 
-  // 搜索任务参数
-  keywords?: string;
-  max_count?: number;
-  sort_type?: number;
-  publish_time?: number;
+  // 调度配置
+  schedule_type: DouyinScheduleType;
+  scheduled_time: string | null;
+  cron_expression: string | null;
 
-  // 详情任务参数
-  aweme_ids?: string[];
-  aweme_urls?: string[];
+  // 任务参数（根据任务类型不同而不同）
+  keywords?: string;  // 搜索任务的关键词
+  aweme_ids?: string[] | null;  // 详情任务的视频ID列表
+  creator_id?: string | null;  // 创作者任务的创作者ID
+  max_count?: number;  // 最大采集数量
 
-  // 创作者任务参数
-  user_id?: string;
-  creator_url?: string;
+  // 执行状态
+  progress: number;  // 进度百分比 0-100
+  error_message: string | null;  // 错误信息
 
-  // 评论配置
-  comment_config?: {
-    enabled: boolean;
-    max_per_video?: number;
-    max_per_note?: number;
-    include_sub_comments?: boolean;
-    max_sub_per_comment?: number;
-    sort_by?: string;
-  };
-
-  // 执行信息
-  created_at?: string;
-  updated_at?: string;
-  started_at?: string;
-  completed_at?: string | null;
-
-  // 进度信息
-  progress?: {
-    current: number;
-    total: number;
-    percentage: number;
-  };
-
-  // 消息和错误
-  message?: string;
-  error?: string | null;
+  // 关联信息
+  social_collector_task_id: string | null;  // 关联的采集任务ID
 
   // 结果统计
-  results_summary?: {
-    notes_count: number;
-    comments_count: number;
-    creators_count: number;
+  results_summary: {
+    current: number;  // 当前完成数量
+    total: number;  // 总目标数量
   };
 
-  // 任务配置
-  config?: {
-    task_type: string;
-    keywords?: string | null;
-    publish_time_type?: number;
-    aweme_ids?: string[] | null;
-    user_id?: string | null;
-    max_count?: number;
-    start_page?: number;
-    comment_config?: {
-      enabled: boolean;
-      max_per_note?: number;
-      include_sub_comments?: boolean;
-      max_sub_per_comment?: number;
-      sort_by?: string;
-    };
-    save_to_mongodb?: boolean;
-    enable_resume?: boolean;
-    enable_proxy?: boolean;
-    media_download_config?: {
-      enabled: boolean;
-      download_images?: boolean;
-      download_videos?: boolean;
-      save_path?: string | null;
-      max_image_size_mb?: number;
-      max_video_size_mb?: number;
-      image_format?: string;
-      video_format?: string;
-    };
-  };
-
-  // 统计信息（兼容旧字段）
-  total_videos?: number;
-  crawled_videos?: number;
-  failed_videos?: number;
-  error_message?: string;
+  // 时间信息
+  created_at: string;
+  updated_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  last_run_at: string | null;
 }
 
 // ============ API 请求和响应类型 ============
@@ -345,11 +294,18 @@ export interface DouyinTaskQuery {
 
 // 创建搜索任务请求
 export interface CreateDouyinSearchTaskRequest {
+  name: string;  // 任务名称
   task_type: 'search';
   keywords: string;
   publish_time_type?: number;  // 发布时间过滤: 0(不限) | 1(一天内) | 7(一周内) | 182(半年内)
   max_count?: number;  // 最大采集数量 (1-500)
   start_page?: number;  // 起始页码 (默认1)
+
+  // 调度配置
+  schedule_type?: DouyinScheduleType;  // 调度类型 (默认immediate)
+  scheduled_time?: string;  // 指定执行时间 (schedule_type=once时必填)
+  cron_expression?: string;  // Cron表达式 (schedule_type=cron时必填)
+
   comment_config?: CommentConfig;
   save_to_mongodb?: boolean;  // 是否保存到MongoDB (默认True)
   enable_resume?: boolean;  // 是否启用断点续爬 (默认True)
@@ -359,10 +315,17 @@ export interface CreateDouyinSearchTaskRequest {
 
 // 创建详情任务请求
 export interface CreateDouyinDetailTaskRequest {
+  name: string;  // 任务名称
   task_type: 'detail';
   aweme_ids: string[];  // 视频ID列表（必填）
   max_count?: number;  // 最大采集数量 (1-500)
   start_page?: number;  // 起始页码 (默认1)
+
+  // 调度配置
+  schedule_type?: DouyinScheduleType;  // 调度类型 (默认immediate)
+  scheduled_time?: string;  // 指定执行时间 (schedule_type=once时必填)
+  cron_expression?: string;  // Cron表达式 (schedule_type=cron时必填)
+
   comment_config?: CommentConfig;
   save_to_mongodb?: boolean;  // 是否保存到MongoDB (默认True)
   enable_resume?: boolean;  // 是否启用断点续爬 (默认True)
@@ -372,10 +335,17 @@ export interface CreateDouyinDetailTaskRequest {
 
 // 创建创作者任务请求（用于创建 creator 类型的采集任务）
 export interface CreateDouyinCreatorTaskRequest {
+  name: string;  // 任务名称
   task_type: 'creator';
   user_id: string;  // 用户ID（必填）
   max_count?: number;  // 最大采集数量 (1-500)
   start_page?: number;  // 起始页码 (默认1)
+
+  // 调度配置
+  schedule_type?: DouyinScheduleType;  // 调度类型 (默认immediate)
+  scheduled_time?: string;  // 指定执行时间 (schedule_type=once时必填)
+  cron_expression?: string;  // Cron表达式 (schedule_type=cron时必填)
+
   comment_config?: CommentConfig;
   save_to_mongodb?: boolean;  // 是否保存到MongoDB (默认True)
   enable_resume?: boolean;  // 是否启用断点续爬 (默认True)
@@ -482,3 +452,17 @@ export const DOUYIN_VIDEO_FORMAT_OPTIONS = [
   { label: 'MP4', value: 'mp4' },
   { label: 'FLV', value: 'flv' },
 ] as const;
+
+// 调度类型选项
+export const DOUYIN_SCHEDULE_TYPE_OPTIONS = [
+  { label: '立即执行', value: 'immediate' },
+  { label: '定时执行', value: 'once' },
+  { label: '周期执行', value: 'cron' },
+] as const;
+
+// 调度类型配置
+export const DOUYIN_SCHEDULE_TYPE_CONFIG = {
+  immediate: { color: 'red', text: '立即执行' },
+  once: { color: 'blue', text: '定时执行' },
+  cron: { color: 'purple', text: '周期执行' },
+} as const;

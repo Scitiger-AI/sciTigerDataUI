@@ -13,13 +13,14 @@ export const DOUYIN_API_ENDPOINTS = {
   // 任务管理
   TASKS: '/tasks',
   TASK_DETAIL: (taskId: string) => `/tasks/${taskId}`,
-  TASK_RESULTS: (taskId: string) => `/tasks/results/${taskId}`,
+  TASK_RESULTS: (taskId: string) => `/tasks/${taskId}/results`,  // 🆕 使用新的任务结果接口
 
   // 视频管理
   VIDEOS: '/videos',
   VIDEO_DETAIL: (awemeId: string) => `/videos/${awemeId}`,
   VIDEO_COMMENTS: (awemeId: string) => `/videos/${awemeId}/comments`,
   VIDEO_DELETE: (awemeId: string) => `/videos/${awemeId}`,
+  VIDEO_DOWNLOAD: (awemeId: string) => `/videos/${awemeId}/download`,
 
   // 创作者管理
   CREATORS: '/creators',

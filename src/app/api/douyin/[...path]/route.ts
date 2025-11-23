@@ -7,37 +7,42 @@ import spiderServerHttp from '@/utils/spider-server-http';
  */
 export async function GET(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
-    return proxyRequest(request, params.path, 'GET');
+    const { path } = await params;
+    return proxyRequest(request, path, 'GET');
 }
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
-    return proxyRequest(request, params.path, 'POST');
+    const { path } = await params;
+    return proxyRequest(request, path, 'POST');
 }
 
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
-    return proxyRequest(request, params.path, 'PUT');
+    const { path } = await params;
+    return proxyRequest(request, path, 'PUT');
 }
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
-    return proxyRequest(request, params.path, 'DELETE');
+    const { path } = await params;
+    return proxyRequest(request, path, 'DELETE');
 }
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
-    return proxyRequest(request, params.path, 'PATCH');
+    const { path } = await params;
+    return proxyRequest(request, path, 'PATCH');
 }
 
 async function proxyRequest(
@@ -50,6 +55,68 @@ async function proxyRequest(
         const path = pathSegments.join('/');
         const apiPath = `/api/v1/douyin/${path}`;
 
+        // 特殊处理视频代理接口，支持流式传输
+        if (path === 'proxy/video' && method === 'GET') {
+            const baseUrl = process.env.SCITIGER_SPIDER_API_BASE_URL || 'http://127.0.0.1:8010';
+            const targetUrl = new URL(`${baseUrl}${apiPath}`);
+
+            // 复制查询参数
+            request.nextUrl.searchParams.forEach((value, key) => {
+                targetUrl.searchParams.append(key, value);
+            });
+
+            // 准备请求头
+            const headers: Record<string, string> = {};
+
+            // 复制 Range 头（关键！）
+            const range = request.headers.get('range');
+            if (range) {
+                headers['Range'] = range;
+            }
+
+            // 复制 Auth 头
+            const authHeader = request.headers.get('authorization');
+            if (authHeader) {
+                headers['Authorization'] = authHeader;
+            }
+
+            // 发起请求
+            const response = await fetch(targetUrl.toString(), {
+                method: 'GET',
+                headers: headers,
+                // @ts-ignore - Next.js 扩展了 fetch，支持 duplex
+                duplex: 'half',
+            });
+
+            // 准备响应头
+            const responseHeaders = new Headers();
+
+            // 转发关键响应头
+            const forwardHeaders = [
+                'content-type',
+                'content-length',
+                'content-range',
+                'accept-ranges',
+                'last-modified',
+                'etag'
+            ];
+
+            forwardHeaders.forEach(key => {
+                const value = response.headers.get(key);
+                if (value) {
+                    responseHeaders.set(key, value);
+                }
+            });
+
+            // 返回流式响应
+            return new NextResponse(response.body, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: responseHeaders,
+            });
+        }
+
+        // 对于其他接口，继续使用 spiderServerHttp（处理 JSON）
         // 准备请求头
         const headers: Record<string, string> = {};
 

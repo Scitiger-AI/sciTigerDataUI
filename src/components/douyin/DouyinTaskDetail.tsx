@@ -157,6 +157,74 @@ export const DouyinTaskDetail: React.FC<DouyinTaskDetailProps> = ({
             </Text>
           </Descriptions.Item>
         )}
+
+        {task.publish_time_type !== undefined && (
+          <Descriptions.Item label="发布时间">
+            <Tag>{task.publish_time_type === 0 ? '不限' :
+              task.publish_time_type === 1 ? '一天内' :
+                task.publish_time_type === 7 ? '一周内' :
+                  task.publish_time_type === 182 ? '半年内' : task.publish_time_type}</Tag>
+          </Descriptions.Item>
+        )}
+
+        {task.start_page && (
+          <Descriptions.Item label="起始页码">
+            <Text>{task.start_page}</Text>
+          </Descriptions.Item>
+        )}
+
+        <Descriptions.Item label="高级选项" span={2}>
+          <Space size="large" wrap>
+            <Space>
+              <Text>代理:</Text>
+              {task.enable_proxy ? <Tag color="blue">启用</Tag> : <Tag>禁用</Tag>}
+            </Space>
+            <Space>
+              <Text>断点续爬:</Text>
+              {task.enable_resume ? <Tag color="green">启用</Tag> : <Tag>禁用</Tag>}
+            </Space>
+            <Space>
+              <Text>MongoDB存储:</Text>
+              {task.save_to_mongodb ? <Tag color="cyan">启用</Tag> : <Tag>禁用</Tag>}
+            </Space>
+          </Space>
+        </Descriptions.Item>
+
+        {task.comment_config && (
+          <Descriptions.Item label="评论配置" span={2}>
+            <Space direction="vertical" size={0}>
+              <Text>启用: {task.comment_config.enabled ? '是' : '否'}</Text>
+              {task.comment_config.enabled && (
+                <>
+                  <Text type="secondary" style={{ fontSize: 12 }}>每视频上限: {task.comment_config.max_per_note}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>二级评论: {task.comment_config.include_sub_comments ? '是' : '否'}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>排序: {task.comment_config.sort_by}</Text>
+                </>
+              )}
+            </Space>
+          </Descriptions.Item>
+        )}
+
+        {task.media_download_config && (
+          <Descriptions.Item label="媒体下载" span={2}>
+            <Space direction="vertical" size={0}>
+              <Text>启用: {task.media_download_config.enabled ? '是' : '否'}</Text>
+              {task.media_download_config.enabled && (
+                <>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    类型: {[
+                      task.media_download_config.download_images && '图片',
+                      task.media_download_config.download_videos && '视频'
+                    ].filter(Boolean).join('/')}
+                  </Text>
+                  {task.media_download_config.save_path && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>路径: {task.media_download_config.save_path}</Text>
+                  )}
+                </>
+              )}
+            </Space>
+          </Descriptions.Item>
+        )}
       </Descriptions>
 
       {/* 执行信息 */}
@@ -209,7 +277,7 @@ export const DouyinTaskDetail: React.FC<DouyinTaskDetailProps> = ({
         )}
 
         <Descriptions.Item label="进度">
-          <Text>{task.progress}%</Text>
+          <Text>{task.progress?.percentage || 0}%</Text>
         </Descriptions.Item>
       </Descriptions>
 
@@ -221,23 +289,47 @@ export const DouyinTaskDetail: React.FC<DouyinTaskDetailProps> = ({
         size="small"
         style={{ marginTop: '24px' }}
       >
-        <Descriptions.Item label="当前进度">
-          <Space>
-            <PlayCircleOutlined style={{ color: '#52c41a' }} />
-            <Text strong style={{ color: '#52c41a' }}>
-              {formatNumber(task.results_summary.current)}
-            </Text>
-          </Space>
-        </Descriptions.Item>
+        {task.status === 'completed' ? (
+          <>
+            <Descriptions.Item label="视频数">
+              <Space>
+                <PlayCircleOutlined style={{ color: '#52c41a' }} />
+                <Text strong style={{ color: '#52c41a' }}>
+                  {formatNumber(task.results_summary?.notes_count || 0)}
+                </Text>
+              </Space>
+            </Descriptions.Item>
 
-        <Descriptions.Item label="总计">
-          <Space>
-            <FileTextOutlined style={{ color: '#1890ff' }} />
-            <Text strong style={{ color: '#1890ff' }}>
-              {formatNumber(task.results_summary.total)}
-            </Text>
-          </Space>
-        </Descriptions.Item>
+            <Descriptions.Item label="评论数">
+              <Space>
+                <CommentOutlined style={{ color: '#1890ff' }} />
+                <Text strong style={{ color: '#1890ff' }}>
+                  {formatNumber(task.results_summary?.comments_count || 0)}
+                </Text>
+              </Space>
+            </Descriptions.Item>
+          </>
+        ) : (
+          <>
+            <Descriptions.Item label="当前进度">
+              <Space>
+                <PlayCircleOutlined style={{ color: '#52c41a' }} />
+                <Text strong style={{ color: '#52c41a' }}>
+                  {formatNumber(task.progress?.current || 0)}
+                </Text>
+              </Space>
+            </Descriptions.Item>
+
+            <Descriptions.Item label="总计">
+              <Space>
+                <FileTextOutlined style={{ color: '#1890ff' }} />
+                <Text strong style={{ color: '#1890ff' }}>
+                  {formatNumber(task.progress?.total || 0)}
+                </Text>
+              </Space>
+            </Descriptions.Item>
+          </>
+        )}
       </Descriptions>
     </div>
   );

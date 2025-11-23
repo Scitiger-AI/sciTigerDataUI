@@ -69,6 +69,22 @@ class DouyinService {
   }
 
   /**
+   * 下载视频
+   */
+  async downloadVideo(awemeId: string): Promise<BaseResponse<DouyinVideo>> {
+    try {
+      const response = await douyinHttp.post<BaseResponse<DouyinVideo>>(
+        DOUYIN_API_ENDPOINTS.VIDEO_DOWNLOAD(awemeId),
+        {}
+      );
+      return response.data;
+    } catch (error) {
+      console.error('下载视频失败:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 删除视频
    */
   async deleteVideo(
@@ -93,7 +109,7 @@ class DouyinService {
       if (options.delete_files !== undefined) {
         params.delete_files = options.delete_files;
       }
-      
+
       const response = await douyinHttp.delete<BaseResponse<{
         aweme_id: string;
         deleted_comments_count: number;
@@ -182,7 +198,7 @@ class DouyinService {
       if (options.delete_videos !== undefined) {
         params.delete_videos = options.delete_videos;
       }
-      
+
       const response = await douyinHttp.delete<BaseResponse<{
         user_id: string;
         deleted_videos_count: number;
@@ -291,9 +307,13 @@ class DouyinService {
     pageSize: number = 20
   ): Promise<BaseResponse<PaginatedResponse<DouyinVideo>>> {
     try {
+      // 🆕 使用新的任务结果接口 /tasks/{taskId}/results
       const response = await douyinHttp.get<BaseResponse<PaginatedResponse<DouyinVideo>>>(
         DOUYIN_API_ENDPOINTS.TASK_RESULTS(taskId),
-        { page, page_size: pageSize }
+        {
+          page: page,
+          page_size: pageSize
+        }
       );
       return response.data;
     } catch (error) {
@@ -323,7 +343,7 @@ class DouyinService {
       if (options.delete_results !== undefined) {
         params.delete_results = options.delete_results;
       }
-      
+
       const response = await douyinHttp.delete<BaseResponse<{
         task_id: string;
         task_deleted_via_api: boolean;

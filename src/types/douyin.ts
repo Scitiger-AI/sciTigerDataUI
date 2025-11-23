@@ -213,21 +213,46 @@ export interface DouyinTask {
   // 任务参数（根据任务类型不同而不同）
   keywords?: string;  // 搜索任务的关键词
   aweme_ids?: string[] | null;  // 详情任务的视频ID列表
-  creator_id?: string | null;  // 创作者任务的创作者ID
+  creator_id?: string;  // 创作者ID
   max_count?: number;  // 最大采集数量
 
+  // 详细配置
+  publish_time_type?: number;
+  start_page?: number;
+  comment_config?: {
+    enabled: boolean;
+    max_per_note?: number;
+    include_sub_comments?: boolean;
+    max_sub_per_comment?: number;
+    sort_by?: string;
+  };
+  media_download_config?: {
+    enabled: boolean;
+    download_images?: boolean;
+    download_videos?: boolean;
+    save_path?: string;
+    max_image_size_mb?: number;
+    max_video_size_mb?: number;
+    image_format?: string;
+    video_format?: string;
+  };
+  enable_proxy?: boolean;
+  enable_resume?: boolean;
+  save_to_mongodb?: boolean;
+
   // 执行状态
-  progress: number;  // 进度百分比 0-100
+  progress: {
+    current: number;
+    total: number;
+    percentage: number;
+  };
   error_message: string | null;  // 错误信息
 
   // 关联信息
   social_collector_task_id: string | null;  // 关联的采集任务ID
 
   // 结果统计
-  results_summary: {
-    current: number;  // 当前完成数量
-    total: number;  // 总目标数量
-  };
+  results_summary: any;  // 结果统计（灵活类型）
 
   // 时间信息
   created_at: string;
@@ -274,6 +299,7 @@ export interface DouyinVideoQuery {
 export interface DouyinCreatorQuery {
   keyword?: string;
   sort_by?: string;
+  sort_order?: 'asc' | 'desc';
   page?: number;
   page_size?: number;
 }
@@ -287,7 +313,12 @@ export interface DouyinCommentQuery {
 
 // 任务列表查询参数
 export interface DouyinTaskQuery {
-  status?: DouyinTaskStatus;
+  keyword?: string;  // 搜索任务名称
+  task_type?: DouyinTaskType;  // 任务类型筛选
+  status?: DouyinTaskStatus;  // 状态筛选
+  schedule_type?: DouyinScheduleType;  // 调度类型筛选
+  sort_by?: string;  // 排序字段
+  sort_order?: 'asc' | 'desc';  // 排序方向
   page?: number;
   page_size?: number;
 }
@@ -415,7 +446,8 @@ export const DOUYIN_TASK_TYPE_CONFIG = {
 // 创作者排序选项
 export const DOUYIN_CREATOR_SORT_OPTIONS = [
   { label: '粉丝数', value: 'fans' },
-  { label: '互动数', value: 'interaction' },
+  { label: '关注数', value: 'follows' },
+  { label: '获赞数', value: 'interaction' },
   { label: '视频数', value: 'videos_count' },
 ] as const;
 
@@ -466,3 +498,11 @@ export const DOUYIN_SCHEDULE_TYPE_CONFIG = {
   once: { color: 'blue', text: '定时执行' },
   cron: { color: 'purple', text: '周期执行' },
 } as const;
+
+// 任务排序选项
+export const DOUYIN_TASK_SORT_OPTIONS = [
+  { label: '创建时间', value: 'created_at' },
+  { label: '完成时间', value: 'completed_at' },
+  { label: '视频数', value: 'results_summary.notes_count' },
+  { label: '评论数', value: 'results_summary.comments_count' },
+] as const;

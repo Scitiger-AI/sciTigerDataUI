@@ -74,6 +74,8 @@ function DouyinTaskDetailPageContent() {
       // 使用 ref 获取当前页码，避免依赖 videosPage 状态
       const currentPage = append ? videosPageRef.current + 1 : 1;
 
+      // 🆕 直接使用 taskId (sciTigerSpider 的任务 ID)
+      // 新接口内部会自动通过 social_collector_task_id 查询快照
       const response = await douyinService.getTaskResults(taskId, currentPage, 20);
 
       if (response.success && response.data) {

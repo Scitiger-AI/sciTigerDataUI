@@ -27,6 +27,7 @@ import {
   Checkbox,
   Divider,
   DatePicker,
+  Tabs,
 } from 'antd';
 import {
   PlusOutlined,
@@ -70,6 +71,9 @@ import {
   DOUYIN_VIDEO_FORMAT_OPTIONS,
   DOUYIN_SCHEDULE_TYPE_OPTIONS,
   DOUYIN_SCHEDULE_TYPE_CONFIG,
+  DOUYIN_TASK_SORT_OPTIONS,
+  DouyinTaskType,
+  DouyinTaskStatus,
 } from '@/types/douyin';
 
 const { Title, Text, Paragraph } = Typography;
@@ -115,6 +119,7 @@ function DouyinPageContent() {
   // 创作者筛选
   const [creatorKeyword, setCreatorKeyword] = useState('');
   const [creatorSortBy, setCreatorSortBy] = useState('fans');
+  const [creatorSortOrder, setCreatorSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // 创作者表单
   const [creatorFormVisible, setCreatorFormVisible] = useState(false);
@@ -126,6 +131,17 @@ function DouyinPageContent() {
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksTotal, setTasksTotal] = useState(0);
   const [tasksPage, setTasksPage] = useState(1);
+  const [tasksHasMore, setTasksHasMore] = useState(true);
+
+  // 任务调度类型tab
+  const [taskScheduleTab, setTaskScheduleTab] = useState<'immediate' | 'once' | 'cron'>('immediate');
+
+  // 任务搜索和筛选
+  const [taskKeyword, setTaskKeyword] = useState('');
+  const [taskTypeFilter, setTaskTypeFilter] = useState<DouyinTaskType | undefined>();
+  const [taskStatusFilter, setTaskStatusFilter] = useState<DouyinTaskStatus | undefined>();
+  const [taskSortBy, setTaskSortBy] = useState('created_at');
+  const [taskSortOrder, setTaskSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // 任务表单
   const [taskFormVisible, setTaskFormVisible] = useState(false);
@@ -133,7 +149,6 @@ function DouyinPageContent() {
   const [taskCreating, setTaskCreating] = useState(false);
   const [taskType, setTaskType] = useState<'search' | 'detail' | 'creator'>('search');
   const [scheduleType, setScheduleType] = useState<'immediate' | 'once' | 'cron'>('immediate');
-  const [tasksHasMore, setTasksHasMore] = useState(true);
 
   // 无限滚动相关 - 哨兵元素 ref
   const videosSentinelRef = useRef<HTMLDivElement>(null);
@@ -175,8 +190,11 @@ function DouyinPageContent() {
   }, []);
 
   const handleViewVideoDetail = useCallback((video: DouyinVideo) => {
-    // 导航到详情页，由 DouyinVideoCard 处理
-  }, []);
+    // 从视频列表进入详情页,不携带 from 参数,返回时会回到视频列表
+    if (video.aweme_id) {
+      router.push(`/crawler-data/douyin/videos/${video.aweme_id}`);
+    }
+  }, [router]);
 
   const handleDeleteVideo = useCallback((video: DouyinVideo) => {
     const awemeId = video.aweme_id || video.id;
@@ -248,6 +266,7 @@ function DouyinPageContent() {
       const query: DouyinCreatorQuery = {
         keyword: creatorKeyword || undefined,
         sort_by: creatorSortBy,
+        sort_order: creatorSortOrder,
         page: append ? creatorsPage + 1 : 1,
         page_size: 20,
       };
@@ -266,7 +285,7 @@ function DouyinPageContent() {
     } finally {
       setCreatorsLoading(false);
     }
-  }, [creatorKeyword, creatorSortBy, creatorsPage, creators, message]);
+  }, [creatorKeyword, creatorSortBy, creatorSortOrder, creatorsPage, creators, message]);
 
   const handleCreateCreator = useCallback(async (values: any) => {
     setCreatorCreating(true);
@@ -352,6 +371,12 @@ function DouyinPageContent() {
     setTasksLoading(true);
     try {
       const response = await douyinService.getTasks({
+        keyword: taskKeyword || undefined,
+        task_type: taskTypeFilter,
+        status: taskStatusFilter,
+        schedule_type: taskScheduleTab,
+        sort_by: taskSortBy,
+        sort_order: taskSortOrder,
         page: append ? tasksPage + 1 : 1,
         page_size: 20,
       });
@@ -368,7 +393,7 @@ function DouyinPageContent() {
     } finally {
       setTasksLoading(false);
     }
-  }, [tasksPage, tasks, message]);
+  }, [taskKeyword, taskTypeFilter, taskStatusFilter, taskScheduleTab, taskSortBy, taskSortOrder, tasksPage, tasks, message]);
 
   const handleCreateTask = useCallback(async (values: any) => {
     setTaskCreating(true);
@@ -470,7 +495,13 @@ function DouyinPageContent() {
         message.success('任务创建成功');
         setTaskFormVisible(false);
         taskForm.resetFields();
-        loadTasks(false);
+
+        // 如果当前不在任务视图,跳转到任务视图
+        if (viewMode !== 'tasks') {
+          handleViewModeChange('tasks');
+        } else {
+          loadTasks(false);
+        }
       }
     } catch (error: any) {
       message.error(error.message || '创建任务失败');
@@ -651,7 +682,7 @@ function DouyinPageContent() {
     } else if (viewMode === 'tasks') {
       loadTasks(false);
     }
-  }, [viewMode, videoKeyword, videoSortBy, videoSortOrder, creatorKeyword, creatorSortBy]);
+  }, [viewMode, videoKeyword, videoSortBy, videoSortOrder, creatorKeyword, creatorSortBy, creatorSortOrder, taskKeyword, taskTypeFilter, taskStatusFilter, taskScheduleTab, taskSortBy, taskSortOrder]);
 
   return (
     <MainLayout fullWidth>
@@ -733,15 +764,14 @@ function DouyinPageContent() {
                     导入创作者
                   </Button>
                 )}
-                {viewMode === 'tasks' && (
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => setTaskFormVisible(true)}
-                  >
-                    创建任务
-                  </Button>
-                )}
+                {/* 创建任务按钮在所有视图都显示 */}
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setTaskFormVisible(true)}
+                >
+                  创建任务
+                </Button>
               </Space>
             </div>
           </div>
@@ -784,7 +814,7 @@ function DouyinPageContent() {
           {/* 创作者视图 - 搜索和筛选 */}
           {viewMode === 'creators' && (
             <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} lg={12}>
+              <Col xs={24} sm={12} lg={10}>
                 <Search
                   placeholder="搜索创作者昵称"
                   allowClear
@@ -794,13 +824,22 @@ function DouyinPageContent() {
                   onChange={(e) => setCreatorKeyword(e.target.value)}
                 />
               </Col>
-              <Col xs={24} sm={6} lg={6}>
+              <Col xs={24} sm={6} lg={4}>
                 <Select
                   style={{ width: '100%' }}
                   size="large"
                   value={creatorSortBy}
                   onChange={setCreatorSortBy}
                   options={[...DOUYIN_CREATOR_SORT_OPTIONS]}
+                />
+              </Col>
+              <Col xs={24} sm={6} lg={4}>
+                <Select
+                  style={{ width: '100%' }}
+                  size="large"
+                  value={creatorSortOrder}
+                  onChange={setCreatorSortOrder}
+                  options={[...DOUYIN_SORT_ORDER_OPTIONS]}
                 />
               </Col>
             </Row>
@@ -1003,184 +1042,382 @@ function DouyinPageContent() {
         {/* 任务列表 */}
         {viewMode === 'tasks' && (
           <div style={{ marginTop: '24px' }}>
-            {tasks.length === 0 && !tasksLoading ? (
-              <Card>
-                <Empty description="暂无任务数据" />
-              </Card>
-            ) : (
-              <>
-                <Row gutter={[16, 16]}>
-                  {tasks.map((task) => {
-                    // 格式化时间
-                    const formatTime = (timeStr?: string | null): string => {
-                      if (!timeStr) return '-';
-                      try {
-                        return new Date(timeStr).toLocaleString('zh-CN', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        });
-                      } catch {
-                        return timeStr;
-                      }
-                    };
+            {/* 搜索和筛选栏 */}
+            <Card style={{ marginBottom: '16px' }}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={8} lg={6}>
+                  <Search
+                    placeholder="搜索任务名称"
+                    allowClear
+                    enterButton={<SearchOutlined />}
+                    size="large"
+                    value={taskKeyword}
+                    onChange={(e) => setTaskKeyword(e.target.value)}
+                    onSearch={() => {
+                      setTasksPage(1);
+                      loadTasks(false);
+                    }}
+                  />
+                </Col>
+                <Col xs={12} sm={4} lg={3}>
+                  <Select
+                    style={{ width: '100%' }}
+                    size="large"
+                    placeholder="任务类型"
+                    allowClear
+                    value={taskTypeFilter}
+                    onChange={(value) => {
+                      setTaskTypeFilter(value);
+                      setTasksPage(1);
+                    }}
+                    options={[
+                      { label: '关键词搜索', value: 'search' },
+                      { label: '视频详情', value: 'detail' },
+                      { label: '创作者主页', value: 'creator' },
+                    ]}
+                  />
+                </Col>
+                <Col xs={12} sm={4} lg={3}>
+                  <Select
+                    style={{ width: '100%' }}
+                    size="large"
+                    placeholder="执行状态"
+                    allowClear
+                    value={taskStatusFilter}
+                    onChange={(value) => {
+                      setTaskStatusFilter(value);
+                      setTasksPage(1);
+                    }}
+                    options={[
+                      { label: '等待执行', value: 'pending' },
+                      { label: '正在执行', value: 'running' },
+                      { label: '已完成', value: 'completed' },
+                      { label: '执行失败', value: 'failed' },
+                      { label: '已取消', value: 'cancelled' },
+                    ]}
+                  />
+                </Col>
+                <Col xs={12} sm={4} lg={3}>
+                  <Select
+                    style={{ width: '100%' }}
+                    size="large"
+                    value={taskSortBy}
+                    onChange={(value) => {
+                      setTaskSortBy(value);
+                      setTasksPage(1);
+                    }}
+                    options={[...DOUYIN_TASK_SORT_OPTIONS]}
+                  />
+                </Col>
+                <Col xs={12} sm={4} lg={3}>
+                  <Select
+                    style={{ width: '100%' }}
+                    size="large"
+                    value={taskSortOrder}
+                    onChange={(value) => {
+                      setTaskSortOrder(value);
+                      setTasksPage(1);
+                    }}
+                    options={[...DOUYIN_SORT_ORDER_OPTIONS]}
+                  />
+                </Col>
+              </Row>
+            </Card>
 
-                    // 格式化数字
-                    const formatNumber = (num?: number): string => {
-                      if (num === undefined || num === null) return '-';
-                      return num.toLocaleString('zh-CN');
-                    };
-
-                    return (
-                      <Col key={task.id} xs={24} sm={12} lg={8} xl={6}>
-                        <Card
-                          hoverable
-                          onClick={() => router.push(`/crawler-data/douyin/tasks/${task.id}?view=tasks`)}
-                          style={{ cursor: 'pointer' }}
-                          actions={[
-                            <Tooltip key="delete" title="删除任务">
-                              <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteTask(task);
-                                }}
-                                disabled={tasksLoading}
-                              />
-                            </Tooltip>,
-                          ]}
-                        >
-                          <Card.Meta
-                            title={
-                              <Space direction="vertical" size="small" style={{ width: '100%' }}>
-                                <Space>
-                                  <Tag color={DOUYIN_TASK_STATUS_CONFIG[task.status].color}>
-                                    {DOUYIN_TASK_STATUS_CONFIG[task.status].text}
-                                  </Tag>
-                                  <Tag color={DOUYIN_TASK_TYPE_CONFIG[task.task_type].color}>
-                                    {DOUYIN_TASK_TYPE_CONFIG[task.task_type].text}
-                                  </Tag>
-                                </Space>
-                                <Text strong style={{ fontSize: '14px' }}>
-                                  {task.name}
-                                </Text>
-                              </Space>
-                            }
-                            description={
-                              <>
-                                {/* 任务参数 */}
-                                {task.keywords && (
-                                  <div style={{ marginBottom: 8 }}>
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                      关键词: <Text strong>{task.keywords}</Text>
-                                    </Text>
-                                  </div>
-                                )}
-                                {task.creator_id && (
-                                  <div style={{ marginBottom: 8 }}>
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                      创作者ID: <Text code>{task.creator_id.substring(0, 20)}...</Text>
-                                    </Text>
-                                  </div>
-                                )}
-                                {task.aweme_ids && task.aweme_ids.length > 0 && (
-                                  <div style={{ marginBottom: 8 }}>
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                      视频数: <Text strong>{task.aweme_ids.length}</Text>
-                                    </Text>
-                                  </div>
-                                )}
-
-                                {/* 调度信息 */}
-                                {task.schedule_type && (
-                                  <div style={{ marginBottom: 8 }}>
-                                    <Space size="small">
-                                      <Tag color={DOUYIN_SCHEDULE_TYPE_CONFIG[task.schedule_type].color}>
-                                        {DOUYIN_SCHEDULE_TYPE_CONFIG[task.schedule_type].text}
-                                      </Tag>
-                                      {task.schedule_type === 'once' && task.scheduled_time && (
-                                        <Text type="secondary" style={{ fontSize: 11 }}>
-                                          {formatTime(task.scheduled_time)}
-                                        </Text>
-                                      )}
-                                      {task.schedule_type === 'cron' && task.cron_expression && (
-                                        <Text type="secondary" style={{ fontSize: 11 }} code>
-                                          {task.cron_expression}
-                                        </Text>
-                                      )}
-                                    </Space>
-                                  </div>
-                                )}
-
-
-                                {/* 结果统计 */}
-                                <Row gutter={8} style={{ marginBottom: 8 }}>
-                                  <Col span={12}>
-                                    <Statistic
-                                      title="当前进度"
-                                      value={formatNumber(task.results_summary.current)}
-                                      valueStyle={{ fontSize: 14 }}
-                                    />
-                                  </Col>
-                                  <Col span={12}>
-                                    <Statistic
-                                      title="总计"
-                                      value={formatNumber(task.results_summary.total)}
-                                      valueStyle={{ fontSize: 14 }}
-                                    />
-                                  </Col>
-                                </Row>
-
-                                {/* 时间信息 */}
-                                <div style={{ marginTop: 8 }}>
-                                  <Text type="secondary" style={{ fontSize: 11 }}>
-                                    创建: {formatTime(task.created_at)}
-                                  </Text>
-                                </div>
-                                {task.completed_at && (
-                                  <div>
-                                    <Text type="secondary" style={{ fontSize: 11 }}>
-                                      完成: {formatTime(task.completed_at)}
-                                    </Text>
-                                  </div>
-                                )}
-
-                                {/* 错误信息 */}
-                                {task.error_message && (
-                                  <div style={{ marginTop: 8 }}>
-                                    <Text type="danger" style={{ fontSize: 11 }} ellipsis>
-                                      {task.error_message}
-                                    </Text>
-                                  </div>
-                                )}
-                              </>
-                            }
-                          />
+            {/* 任务列表 - 按调度类型分tab */}
+            <Tabs
+              activeKey={taskScheduleTab}
+              onChange={(key) => {
+                setTaskScheduleTab(key as any);
+                setTasksPage(1);
+                setTasks([]);
+              }}
+              items={[
+                {
+                  key: 'immediate',
+                  label: `立即执行任务 (${taskScheduleTab === 'immediate' ? tasksTotal : '-'})`,
+                  children: (
+                    <>
+                      {tasks.length === 0 && !tasksLoading ? (
+                        <Card>
+                          <Empty description="暂无立即执行任务" />
                         </Card>
-                      </Col>
-                    );
-                  })}
-                </Row>
-                {/* 加载更多指示器 */}
-                <div ref={tasksSentinelRef} style={{ textAlign: 'center', padding: '20px' }}>
-                  {tasksLoading && (
-                    <Spin tip="加载中...">
-                      <div style={{ height: '60px' }} />
-                    </Spin>
-                  )}
-                  {!tasksLoading && tasksHasMore && tasks.length > 0 && (
-                    <Button onClick={() => loadTasks(true)}>加载更多</Button>
-                  )}
-                  {!tasksLoading && !tasksHasMore && tasks.length > 0 && (
-                    <Text type="secondary">已加载全部数据</Text>
-                  )}
-                </div>
-              </>
-            )}
+                      ) : (
+                        <>
+                          <Row gutter={[16, 16]}>
+                            {tasks.map((task) => {
+                              // 格式化时间
+                              const formatTime = (timeStr?: string | null): string => {
+                                if (!timeStr) return '-';
+                                try {
+                                  return new Date(timeStr).toLocaleString('zh-CN', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  });
+                                } catch {
+                                  return timeStr;
+                                }
+                              };
+
+                              // 格式化数字
+                              const formatNumber = (num?: number): string => {
+                                if (num === undefined || num === null) return '-';
+                                return num.toLocaleString('zh-CN');
+                              };
+
+                              return (
+                                <Col key={task.id} xs={24} sm={12} lg={8} xl={6}>
+                                  <Card
+                                    hoverable
+                                    onClick={() => router.push(`/crawler-data/douyin/tasks/${task.id}?view=tasks`)}
+                                    style={{ cursor: 'pointer' }}
+                                    actions={[
+                                      <Tooltip key="delete" title="删除任务">
+                                        <Button
+                                          type="text"
+                                          danger
+                                          icon={<DeleteOutlined />}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteTask(task);
+                                          }}
+                                          disabled={tasksLoading}
+                                        />
+                                      </Tooltip>,
+                                    ]}
+                                  >
+                                    <Card.Meta
+                                      title={
+                                        <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                                          <Space>
+                                            <Tag color={DOUYIN_TASK_STATUS_CONFIG[task.status].color}>
+                                              {DOUYIN_TASK_STATUS_CONFIG[task.status].text}
+                                            </Tag>
+                                            <Tag color={DOUYIN_TASK_TYPE_CONFIG[task.task_type].color}>
+                                              {DOUYIN_TASK_TYPE_CONFIG[task.task_type].text}
+                                            </Tag>
+                                          </Space>
+                                          <Text strong style={{ fontSize: '14px' }}>
+                                            {task.name}
+                                          </Text>
+                                        </Space>
+                                      }
+                                      description={
+                                        <>
+                                          {/* 任务参数 */}
+                                          {task.keywords && (
+                                            <div style={{ marginBottom: 8 }}>
+                                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                                关键词: <Text strong>{task.keywords}</Text>
+                                              </Text>
+                                            </div>
+                                          )}
+                                          {task.creator_id && (
+                                            <div style={{ marginBottom: 8 }}>
+                                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                                创作者ID: <Text code>{task.creator_id.substring(0, 20)}...</Text>
+                                              </Text>
+                                            </div>
+                                          )}
+                                          {task.aweme_ids && task.aweme_ids.length > 0 && (
+                                            <div style={{ marginBottom: 8 }}>
+                                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                                视频数: <Text strong>{task.aweme_ids.length}</Text>
+                                              </Text>
+                                            </div>
+                                          )}
+
+                                          {/* 调度信息 */}
+                                          {task.schedule_type && (
+                                            <div style={{ marginBottom: 8 }}>
+                                              <Space size="small">
+                                                <Tag color={DOUYIN_SCHEDULE_TYPE_CONFIG[task.schedule_type].color}>
+                                                  {DOUYIN_SCHEDULE_TYPE_CONFIG[task.schedule_type].text}
+                                                </Tag>
+                                                {task.schedule_type === 'once' && task.scheduled_time && (
+                                                  <Text type="secondary" style={{ fontSize: 11 }}>
+                                                    {formatTime(task.scheduled_time)}
+                                                  </Text>
+                                                )}
+                                                {task.schedule_type === 'cron' && task.cron_expression && (
+                                                  <Text type="secondary" style={{ fontSize: 11 }} code>
+                                                    {task.cron_expression}
+                                                  </Text>
+                                                )}
+                                              </Space>
+                                            </div>
+                                          )}
+
+
+                                          {/* 结果统计 */}
+                                          {task.status === 'completed' ? (
+                                            <Row gutter={8} style={{ marginBottom: 8 }}>
+                                              <Col span={12}>
+                                                <Statistic
+                                                  title="视频数"
+                                                  value={formatNumber(task.results_summary?.notes_count || 0)}
+                                                  valueStyle={{ fontSize: 14 }}
+                                                />
+                                              </Col>
+                                              <Col span={12}>
+                                                <Statistic
+                                                  title="评论数"
+                                                  value={formatNumber(task.results_summary?.comments_count || 0)}
+                                                  valueStyle={{ fontSize: 14 }}
+                                                />
+                                              </Col>
+                                            </Row>
+                                          ) : (
+                                            <Row gutter={8} style={{ marginBottom: 8 }}>
+                                              <Col span={12}>
+                                                <Statistic
+                                                  title="当前进度"
+                                                  value={formatNumber(task.progress?.current)}
+                                                  valueStyle={{ fontSize: 14 }}
+                                                />
+                                              </Col>
+                                              <Col span={12}>
+                                                <Statistic
+                                                  title="总计"
+                                                  value={formatNumber(task.progress?.total)}
+                                                  valueStyle={{ fontSize: 14 }}
+                                                />
+                                              </Col>
+                                            </Row>
+                                          )}
+
+                                          {/* 时间信息 */}
+                                          <div style={{ marginTop: 8 }}>
+                                            <Text type="secondary" style={{ fontSize: 11 }}>
+                                              创建: {formatTime(task.created_at)}
+                                            </Text>
+                                          </div>
+
+                                          <div>
+                                            <Text type="secondary" style={{ fontSize: 11 }}>
+                                              完成: {task.completed_at && formatTime(task.completed_at)}
+                                            </Text>
+                                          </div>
+
+
+                                          {/* 错误信息 */}
+                                          {task.error_message && (
+                                            <div style={{ marginTop: 8 }}>
+                                              <Text type="danger" style={{ fontSize: 11 }} ellipsis>
+                                                {task.error_message}
+                                              </Text>
+                                            </div>
+                                          )}
+                                        </>
+                                      }
+                                    />
+                                  </Card>
+                                </Col>
+                              );
+                            })}
+                          </Row>
+                          {/* 加载更多指示器 */}
+                          <div ref={tasksSentinelRef} style={{ textAlign: 'center', padding: '20px' }}>
+                            {tasksLoading && (
+                              <Spin tip="加载中...">
+                                <div style={{ height: '60px' }} />
+                              </Spin>
+                            )}
+                            {!tasksLoading && tasksHasMore && tasks.length > 0 && (
+                              <Button onClick={() => loadTasks(true)}>加载更多</Button>
+                            )}
+                            {!tasksLoading && !tasksHasMore && tasks.length > 0 && (
+                              <Text type="secondary">已加载全部数据</Text>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )
+                },
+                {
+                  key: 'once',
+                  label: `定时执行任务 (${taskScheduleTab === 'once' ? tasksTotal : '-'})`,
+                  children: (
+                    <>
+                      {tasks.length === 0 && !tasksLoading ? (
+                        <Card>
+                          <Empty description="暂无定时执行任务" />
+                        </Card>
+                      ) : (
+                        <>
+                          <Row gutter={[16, 16]}>
+                            {/* 任务卡片内容与立即执行任务相同,此处省略 */}
+                            {tasks.map((task) => (
+                              <Col key={task.id} xs={24} sm={12} lg={8} xl={6}>
+                                <Card
+                                  hoverable
+                                  onClick={() => router.push(`/crawler-data/douyin/tasks/${task.id}?view=tasks`)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <Empty description="任务卡片内容" />
+                                </Card>
+                              </Col>
+                            ))}
+                          </Row>
+                          <div ref={tasksSentinelRef} style={{ textAlign: 'center', padding: '20px' }}>
+                            {tasksLoading && <Spin tip="加载中..."><div style={{ height: '60px' }} /></Spin>}
+                            {!tasksLoading && tasksHasMore && tasks.length > 0 && (
+                              <Button onClick={() => loadTasks(true)}>加载更多</Button>
+                            )}
+                            {!tasksLoading && !tasksHasMore && tasks.length > 0 && (
+                              <Text type="secondary">已加载全部数据</Text>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )
+                },
+                {
+                  key: 'cron',
+                  label: `周期执行任务 (${taskScheduleTab === 'cron' ? tasksTotal : '-'})`,
+                  children: (
+                    <>
+                      {tasks.length === 0 && !tasksLoading ? (
+                        <Card>
+                          <Empty description="暂无周期执行任务" />
+                        </Card>
+                      ) : (
+                        <>
+                          <Row gutter={[16, 16]}>
+                            {/* 任务卡片内容与立即执行任务相同,此处省略 */}
+                            {tasks.map((task) => (
+                              <Col key={task.id} xs={24} sm={12} lg={8} xl={6}>
+                                <Card
+                                  hoverable
+                                  onClick={() => router.push(`/crawler-data/douyin/tasks/${task.id}?view=tasks`)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <Empty description="任务卡片内容" />
+                                </Card>
+                              </Col>
+                            ))}
+                          </Row>
+                          <div ref={tasksSentinelRef} style={{ textAlign: 'center', padding: '20px' }}>
+                            {tasksLoading && <Spin tip="加载中..."><div style={{ height: '60px' }} /></Spin>}
+                            {!tasksLoading && tasksHasMore && tasks.length > 0 && (
+                              <Button onClick={() => loadTasks(true)}>加载更多</Button>
+                            )}
+                            {!tasksLoading && !tasksHasMore && tasks.length > 0 && (
+                              <Text type="secondary">已加载全部数据</Text>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )
+                }
+              ]}
+            />
           </div>
         )}
 

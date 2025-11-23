@@ -45,6 +45,7 @@ interface DouyinVideoDetailProps {
   video: DouyinVideo | null;
   loading?: boolean;
   showActions?: boolean;
+  onRefresh?: () => void;  // 刷新回调,用于下载完成后刷新视频详情
 }
 
 // 格式化数字（支持字符串和数字类型）
@@ -75,9 +76,11 @@ const getVideoUrl = (video: DouyinVideo): string | null => {
   if (video.downloaded_videos && video.downloaded_videos.length > 0) {
     return video.downloaded_videos[0].api_url;
   }
-  // 否则使用视频下载链接
+  // 否则使用视频下载链接（通过后端代理）
   if (video.video_download_url) {
-    return video.video_download_url;
+    // 使用后端代理接口，解决防盗链问题
+    // 前端 /api/douyin/proxy/video -> 后端 /api/v1/douyin/proxy/video
+    return `/api/douyin/proxy/video?url=${encodeURIComponent(video.video_download_url)}`;
   }
   return null;
 };
@@ -86,6 +89,7 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
   video,
   loading = false,
   showActions = true,
+  onRefresh,
 }) => {
   const { message } = App.useApp();
   const [comments, setComments] = useState<DouyinComment[]>([]);
@@ -190,9 +194,14 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
                   style={{ marginBottom: '24px' }}
                 >
                   <Descriptions.Item label="视频ID" span={2}>
-                    <Text code style={{ wordBreak: 'break-all' }}>
-                      {video.aweme_id || '-'}
-                    </Text>
+                    <Space>
+                      <Text code style={{ wordBreak: 'break-all' }}>
+                        {video.aweme_id || '-'}
+                      </Text>
+                      {video.downloaded_videos && video.downloaded_videos.length > 0 && (
+                        <Tag color="green">已下载</Tag>
+                      )}
+                    </Space>
                   </Descriptions.Item>
 
                   <Descriptions.Item label="作者昵称">
@@ -391,7 +400,40 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
         <Col xs={24} lg={10}>
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             {/* 视频播放器 */}
-            <Card title="视频" size="small">
+            <Card
+              title="视频"
+              size="small"
+              extra={
+                videoUrl && (!video.downloaded_videos || video.downloaded_videos.length === 0) && (
+                  <Tooltip title="将视频下载到服务器存储,下载后可直接播放">
+                    <Button
+                      type="primary"
+                      size="small"
+                      icon={<PlayCircleOutlined />}
+                      onClick={async () => {
+                        try {
+                          message.loading({ content: '正在请求服务器下载视频...', key: 'downloadVideo' });
+                          const response = await douyinService.downloadVideo(video.aweme_id);
+                          if (response.success) {
+                            message.success({ content: '服务器下载成功', key: 'downloadVideo' });
+                            // 调用刷新回调,而不是整页刷新
+                            if (onRefresh) {
+                              onRefresh();
+                            }
+                          } else {
+                            message.error({ content: response.message || '下载失败', key: 'downloadVideo' });
+                          }
+                        } catch (error) {
+                          message.error({ content: '下载失败', key: 'downloadVideo' });
+                        }
+                      }}
+                    >
+                      下载到服务器
+                    </Button>
+                  </Tooltip>
+                )
+              }
+            >
               {videoUrl ? (
                 <div style={{ width: '100%', textAlign: 'center' }}>
                   <video
@@ -403,6 +445,8 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
                     }}
                     src={videoUrl}
                     poster={coverUrl}
+                    // @ts-ignore
+                    referrerPolicy="no-referrer"
                   >
                     您的浏览器不支持视频播放
                   </video>
@@ -420,7 +464,7 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
               title={`评论列表 (${commentsTotal})`}
               size="small"
               style={{ maxHeight: '600px', display: 'flex', flexDirection: 'column' }}
-              bodyStyle={{ flex: 1, overflow: 'hidden', padding: 0 }}
+              styles={{ body: { flex: 1, overflow: 'hidden', padding: 0 } }}
             >
               <div
                 ref={commentsContainerRef}
@@ -476,16 +520,16 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
                                   </Text>
                                   {(comment.sub_comment_count ||
                                     comment.reply_comment_total) && (
-                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                      <CommentOutlined style={{ marginRight: 4 }} />
-                                      {formatNumber(
-                                        comment.sub_comment_count ??
+                                      <Text type="secondary" style={{ fontSize: 12 }}>
+                                        <CommentOutlined style={{ marginRight: 4 }} />
+                                        {formatNumber(
+                                          comment.sub_comment_count ??
                                           comment.reply_comment_total ??
                                           0
-                                      )}{' '}
-                                      条回复
-                                    </Text>
-                                  )}
+                                        )}{' '}
+                                        条回复
+                                      </Text>
+                                    )}
                                 </Space>
                               </>
                             }

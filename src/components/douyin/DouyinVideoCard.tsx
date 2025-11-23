@@ -58,7 +58,11 @@ export const DouyinVideoCard: React.FC<DouyinVideoCardProps> = ({
 
   // 处理卡片点击 - 导航到详情页
   const handleCardClick = () => {
-    if (video.aweme_id) {
+    // 优先使用父组件的 onView 回调,确保正确传递上下文参数(from, creatorId, taskId等)
+    if (onView) {
+      onView(video);
+    } else if (video.aweme_id) {
+      // 如果没有 onView 回调,使用默认跳转(用于抖音首页的视频列表)
       router.push(`/crawler-data/douyin/videos/${video.aweme_id}`);
     }
   };
@@ -101,10 +105,10 @@ export const DouyinVideoCard: React.FC<DouyinVideoCardProps> = ({
       style={{ cursor: 'pointer', height: '100%' }}
       cover={
         (video.cover_url || video.video_cover) ? (
-          <div style={{ 
-            height: 200, 
-            overflow: 'hidden', 
-            background: '#f0f0f0', 
+          <div style={{
+            height: 200,
+            overflow: 'hidden',
+            background: '#f0f0f0',
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
@@ -113,7 +117,7 @@ export const DouyinVideoCard: React.FC<DouyinVideoCardProps> = ({
             <Image
               alt={video.title || video.desc}
               src={video.cover_url || video.video_cover || ''}
-              style={{ 
+              style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
@@ -192,6 +196,11 @@ export const DouyinVideoCard: React.FC<DouyinVideoCardProps> = ({
               <Tag color="red" style={{ fontSize: '11px' }}>
                 视频
               </Tag>
+              {video.downloaded_videos && video.downloaded_videos.length > 0 && (
+                <Tag color="green" style={{ fontSize: '11px' }}>
+                  已下载
+                </Tag>
+              )}
             </div>
             {video.user_signature && (
               <div style={{ minHeight: '16px', display: 'flex', alignItems: 'center' }}>

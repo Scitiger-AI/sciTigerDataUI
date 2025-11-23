@@ -51,22 +51,22 @@ function DouyinVideoDetailPageContent() {
         let foundVideo: DouyinVideo | null = null;
         let page = 1;
         const pageSize = 50;
-        
+
         while (!foundVideo && page <= 10) {
           try {
             const listResponse = await douyinService.getVideos({
               page,
               page_size: pageSize,
             });
-            
+
             if (listResponse.success && listResponse.data) {
               foundVideo = listResponse.data.items.find((v) => v.aweme_id === awemeId) || null;
-              
+
               if (foundVideo) {
                 setVideo(foundVideo);
                 break;
               }
-              
+
               // 如果当前页没有找到，且还有更多数据，继续搜索
               if (listResponse.data.items.length < pageSize) {
                 break; // 没有更多数据了
@@ -80,7 +80,7 @@ function DouyinVideoDetailPageContent() {
             break;
           }
         }
-        
+
         if (!foundVideo) {
           message.error('视频不存在');
         }
@@ -112,7 +112,7 @@ function DouyinVideoDetailPageContent() {
     const creatorId = searchParams.get('creatorId');
     const taskId = searchParams.get('taskId');
     const view = searchParams.get('view');
-    
+
     // 如果来自创作者详情页，返回创作者详情页
     if (from === 'creator' && creatorId) {
       router.push(`/crawler-data/douyin/creators/${creatorId}?view=${view || 'creators'}`);
@@ -128,11 +128,11 @@ function DouyinVideoDetailPageContent() {
 
   // 动态显示返回按钮文本
   const from = searchParams.get('from');
-  const backButtonText = from === 'creator' 
-    ? '返回创作者详情' 
+  const backButtonText = from === 'creator'
+    ? '返回创作者详情'
     : from === 'task'
-    ? '返回任务详情'
-    : '返回列表';
+      ? '返回任务详情'
+      : '返回列表';
 
   // 页面初始化
   useEffect(() => {
@@ -206,7 +206,12 @@ function DouyinVideoDetailPageContent() {
 
         {/* 视频详情 */}
         <Card>
-          <DouyinVideoDetail video={video} loading={false} showActions={false} />
+          <DouyinVideoDetail
+            video={video}
+            loading={false}
+            showActions={false}
+            onRefresh={loadVideoDetail}
+          />
         </Card>
       </div>
     </MainLayout>
@@ -218,11 +223,11 @@ export default function DouyinVideoDetailPage() {
   return (
     <Suspense fallback={
       <MainLayout>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '400px' 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px'
         }}>
           <Spin size="large" tip="加载中...">
             <div style={{ padding: '50px', background: '#f5f5f5', minWidth: '200px' }}>

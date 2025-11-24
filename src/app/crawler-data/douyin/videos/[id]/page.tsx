@@ -19,6 +19,7 @@ import DouyinVideoDetail from '@/components/douyin/DouyinVideoDetail';
 import douyinService from '@/services/douyin';
 import MainLayout from '@/layout/MainLayout';
 
+
 const { Title } = Typography;
 
 function DouyinVideoDetailPageContent() {
@@ -217,6 +218,7 @@ function DouyinVideoDetailPageContent() {
     </MainLayout>
   );
 }
+
 
 // 导出的主组件，使用 Suspense 包裹
 export default function DouyinVideoDetailPage() {

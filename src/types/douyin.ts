@@ -108,12 +108,49 @@ export interface DouyinVideo {
   // 媒体下载配置
   media_download_config?: MediaDownloadConfig;
 
-  // AI 处理状态（预留）
+  // 🆕 视频文案处理状态和数据
+  transcript_info?: {
+    has_transcript: boolean;
+    source: string;
+    transcript_text: string;
+    transcript_segments?: Array<{
+      begin_time: number;
+      end_time: number;
+      text: string;
+      channel_id: number;
+      emotion_value: number;
+    }>;
+    word_count: number;
+    segment_count?: number;
+    asr_metadata?: any;
+    extracted_at: string;
+    status: string;
+  };
+
+  denoised_transcript?: {
+    has_denoised: boolean;
+    denoised_text: string;
+    denoised_length?: number;     // 去噪后字数(可选,后端提供)
+    ai_denoise_metadata?: any;
+    denoised_at: string;
+  };
+
+  rewritten_transcript?: {
+    has_rewritten: boolean;
+    rewritten_text: string;
+    rewritten_length?: number;    // 重写后字数(可选,后端提供)
+    ai_rewrite_metadata?: any;
+    rewritten_at: string;
+    style?: string;
+  };
+
+  // AI 处理状态（向后兼容，已废弃）
   ai_script_extracted?: boolean;  // 视频文案提取
   ai_denoised?: boolean;           // AI去噪
   ai_rewritten?: boolean;          // AI重写
   extracted_script?: string;       // 提取的文案
 }
+
 
 // ============ 抖音评论类型定义 ============
 
@@ -391,7 +428,59 @@ export interface CreateDouyinCreatorAccountRequest {
   force_refresh?: boolean;
 }
 
-// AI 功能请求类型（预留）
+// 🆕 视频文案处理相关类型
+export interface TranscriptExtractRequest {
+  force_reprocess?: boolean;
+}
+
+export interface TranscriptExtractResponse {
+  aweme_id: string;
+  transcript_text: string;
+  word_count: number;
+  audio_duration: number;
+  processing_time: number;
+  cost: number;
+}
+
+export interface TranscriptGetResponse {
+  type: 'original' | 'denoised' | 'rewritten';
+  text: string;
+  metadata: any;
+}
+
+export interface TranscriptDenoiseRequest {
+  force_reprocess?: boolean;
+  auto_extract?: boolean;
+}
+
+export interface TranscriptDenoiseResponse {
+  aweme_id: string;
+  original_text: string;
+  denoised_text: string;
+  original_length: number;
+  denoised_length: number;
+  reduction_rate: number;
+  processing_time: number;
+}
+
+export interface TranscriptRewriteRequest {
+  force_reprocess?: boolean;
+  auto_denoise?: boolean;
+  style?: 'natural' | 'formal' | 'casual';
+}
+
+export interface TranscriptRewriteResponse {
+  aweme_id: string;
+  source_text: string;
+  rewritten_text: string;
+  source_length: number;
+  rewritten_length: number;
+  length_change_rate: number;
+  processing_time: number;
+  style: string;
+}
+
+// AI 功能请求类型（已废弃，保留向后兼容）
 export interface DouyinVideoExtractScriptRequest {
   aweme_id: string;
   force_reprocess?: boolean;
@@ -409,6 +498,7 @@ export interface DouyinVideoRewriteRequest {
   save_to_file?: boolean;
   auto_denoise?: boolean;
 }
+
 
 // ============ 常量配置 ============
 

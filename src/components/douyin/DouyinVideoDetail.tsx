@@ -17,7 +17,6 @@ import {
   Button,
   Tooltip,
   Collapse,
-  Tabs,
   Card,
 } from 'antd';
 import {
@@ -29,13 +28,10 @@ import {
   CommentOutlined,
   ShareAltOutlined,
   StarOutlined,
-  FileTextOutlined,
-  RobotOutlined,
-  DownOutlined,
-  UpOutlined,
 } from '@ant-design/icons';
 import type { DouyinVideo, DouyinComment } from '@/types/douyin';
 import douyinService from '@/services/douyin';
+import VideoTranscriptCard from './VideoTranscriptCard';
 import { App } from 'antd';
 
 const { Text, Paragraph, Title } = Typography;
@@ -98,7 +94,7 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
   const [commentsHasMore, setCommentsHasMore] = useState(true);
   const [commentsTotal, setCommentsTotal] = useState(0);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
-  const [activeTab, setActiveTab] = useState('script');
+  const videoRef = useRef<HTMLVideoElement>(null); // 视频元素引用,用于时间轴同步
 
   // 加载评论
   const loadComments = useCallback(
@@ -437,6 +433,7 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
               {videoUrl ? (
                 <div style={{ width: '100%', textAlign: 'center' }}>
                   <video
+                    ref={videoRef}
                     controls
                     style={{
                       maxWidth: '100%',
@@ -557,67 +554,13 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
           </Space>
         </Col>
 
-        {/* 右侧：文案内容展示区 */}
+        {/* 右列：文案内容展示区 */}
         <Col xs={24} lg={14}>
-          <Card title="文案内容" size="small" style={{ height: '100%' }}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={[
-                {
-                  key: 'script',
-                  label: (
-                    <Space>
-                      <FileTextOutlined />
-                      视频文案
-                    </Space>
-                  ),
-                  children: (
-                    <div style={{ padding: '16px 0', minHeight: '200px' }}>
-                      <Empty
-                        description="暂无视频文案"
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      />
-                    </div>
-                  ),
-                },
-                {
-                  key: 'denoise',
-                  label: (
-                    <Space>
-                      <RobotOutlined />
-                      AI去噪
-                    </Space>
-                  ),
-                  children: (
-                    <div style={{ padding: '16px 0', minHeight: '200px' }}>
-                      <Empty
-                        description="暂无AI去噪内容"
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      />
-                    </div>
-                  ),
-                },
-                {
-                  key: 'rewrite',
-                  label: (
-                    <Space>
-                      <RobotOutlined />
-                      AI重写
-                    </Space>
-                  ),
-                  children: (
-                    <div style={{ padding: '16px 0', minHeight: '200px' }}>
-                      <Empty
-                        description="暂无AI重写内容"
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                      />
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          </Card>
+          <VideoTranscriptCard
+            video={video}
+            onRefresh={onRefresh}
+            videoRef={videoRef}
+          />
         </Col>
       </Row>
     </div>

@@ -31,11 +31,18 @@ export const DOUYIN_API_ENDPOINTS = {
   // 任务管理
   TASK_DELETE: (taskId: string) => `/tasks/${taskId}`,
 
-  // AI 功能（预留）
-  VIDEO_EXTRACT_SCRIPT: (awemeId: string) => `/videos/${awemeId}/extract-script`,
-  VIDEO_DENOISE: (awemeId: string) => `/videos/${awemeId}/denoise`,
-  VIDEO_REWRITE: (awemeId: string) => `/videos/${awemeId}/rewrite`,
+  // 🆕 视频文案处理功能
+  VIDEO_EXTRACT_TRANSCRIPT: (awemeId: string) => `/videos/${awemeId}/extract-transcript`,
+  VIDEO_GET_TRANSCRIPT: (awemeId: string) => `/videos/${awemeId}/transcript`,
+  VIDEO_DENOISE_TRANSCRIPT: (awemeId: string) => `/videos/${awemeId}/denoise-transcript`,
+  VIDEO_REWRITE_TRANSCRIPT: (awemeId: string) => `/videos/${awemeId}/rewrite-transcript`,
+
+  // AI 功能（已废弃，保留向后兼容）
+  VIDEO_EXTRACT_SCRIPT: (awemeId: string) => `/videos/${awemeId}/extract-transcript`,
+  VIDEO_DENOISE: (awemeId: string) => `/videos/${awemeId}/denoise-transcript`,
+  VIDEO_REWRITE: (awemeId: string) => `/videos/${awemeId}/rewrite-transcript`,
 } as const;
+
 
 // 默认分页配置
 export const DOUYIN_DEFAULT_PAGE_CONFIG = {

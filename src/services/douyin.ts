@@ -15,7 +15,15 @@ import type {
   CreateDouyinDetailTaskRequest,
   CreateDouyinCreatorTaskRequest,
   CreateDouyinCreatorAccountRequest,
+  TranscriptExtractRequest,
+  TranscriptExtractResponse,
+  TranscriptGetResponse,
+  TranscriptDenoiseRequest,
+  TranscriptDenoiseResponse,
+  TranscriptRewriteRequest,
+  TranscriptRewriteResponse,
 } from '@/types/douyin';
+
 
 class DouyinService {
   // ============ 视频相关 ============
@@ -362,17 +370,18 @@ class DouyinService {
     }
   }
 
-  // ============ AI 功能（预留）============
+  // ============ 视频文案处理功能 ============
 
   /**
-   * AI提取视频文案（预留）
+   * 提取视频文案（语音转文字）
    */
-  async extractVideoScript(awemeId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+  async extractTranscript(
+    awemeId: string,
+    forceReprocess: boolean = false
+  ): Promise<BaseResponse<TranscriptExtractResponse>> {
     try {
-      const response = await douyinHttp.post<BaseResponse<any>>(
-        DOUYIN_API_ENDPOINTS.VIDEO_EXTRACT_SCRIPT(awemeId),
-        { force_reprocess: forceReprocess }
-      );
+      const endpoint = `${DOUYIN_API_ENDPOINTS.VIDEO_EXTRACT_TRANSCRIPT(awemeId)}?force_reprocess=${forceReprocess}`;
+      const response = await douyinHttp.post<BaseResponse<TranscriptExtractResponse>>(endpoint);
       return response.data;
     } catch (error) {
       console.error('提取视频文案失败:', error);
@@ -381,37 +390,88 @@ class DouyinService {
   }
 
   /**
-   * AI去噪视频内容（预留）
+   * 获取视频文案
    */
-  async denoiseVideo(awemeId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+  async getTranscript(
+    awemeId: string,
+    transcriptType: 'auto' | 'original' | 'denoised' | 'rewritten' = 'auto'
+  ): Promise<BaseResponse<TranscriptGetResponse>> {
     try {
-      const response = await douyinHttp.post<BaseResponse<any>>(
-        DOUYIN_API_ENDPOINTS.VIDEO_DENOISE(awemeId),
-        { force_reprocess: forceReprocess }
+      const response = await douyinHttp.get<BaseResponse<TranscriptGetResponse>>(
+        DOUYIN_API_ENDPOINTS.VIDEO_GET_TRANSCRIPT(awemeId),
+        { transcript_type: transcriptType }
       );
       return response.data;
     } catch (error) {
-      console.error('去噪视频内容失败:', error);
+      console.error('获取视频文案失败:', error);
       throw error;
     }
   }
 
   /**
-   * AI重写视频内容（预留）
+   * 去噪视频文案
    */
-  async rewriteVideo(awemeId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+  async denoiseTranscript(
+    awemeId: string,
+    options: TranscriptDenoiseRequest = {}
+  ): Promise<BaseResponse<TranscriptDenoiseResponse>> {
     try {
-      const response = await douyinHttp.post<BaseResponse<any>>(
-        DOUYIN_API_ENDPOINTS.VIDEO_REWRITE(awemeId),
-        { force_reprocess: forceReprocess, auto_denoise: true }
-      );
+      const forceReprocess = options.force_reprocess || false;
+      const autoExtract = options.auto_extract !== undefined ? options.auto_extract : true;
+      const endpoint = `${DOUYIN_API_ENDPOINTS.VIDEO_DENOISE_TRANSCRIPT(awemeId)}?force_reprocess=${forceReprocess}&auto_extract=${autoExtract}`;
+      const response = await douyinHttp.post<BaseResponse<TranscriptDenoiseResponse>>(endpoint);
       return response.data;
     } catch (error) {
-      console.error('重写视频内容失败:', error);
+      console.error('去噪视频文案失败:', error);
       throw error;
     }
   }
+
+  /**
+   * 重写视频文案
+   */
+  async rewriteTranscript(
+    awemeId: string,
+    options: TranscriptRewriteRequest = {}
+  ): Promise<BaseResponse<TranscriptRewriteResponse>> {
+    try {
+      const forceReprocess = options.force_reprocess || false;
+      const autoDenoise = options.auto_denoise !== undefined ? options.auto_denoise : true;
+      const style = options.style || 'natural';
+      const endpoint = `${DOUYIN_API_ENDPOINTS.VIDEO_REWRITE_TRANSCRIPT(awemeId)}?force_reprocess=${forceReprocess}&auto_denoise=${autoDenoise}&style=${style}`;
+      const response = await douyinHttp.post<BaseResponse<TranscriptRewriteResponse>>(endpoint);
+      return response.data;
+    } catch (error) {
+      console.error('重写视频文案失败:', error);
+      throw error;
+    }
+  }
+
+  // ============ AI 功能（已废弃，保留向后兼容）============
+
+  /**
+   * AI提取视频文案（已废弃，使用 extractTranscript 替代）
+   */
+  async extractVideoScript(awemeId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+    return this.extractTranscript(awemeId, forceReprocess);
+  }
+
+  /**
+   * AI去噪视频内容（已废弃，使用 denoiseTranscript 替代）
+   */
+  async denoiseVideo(awemeId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+    return this.denoiseTranscript(awemeId, { force_reprocess: forceReprocess });
+  }
+
+  /**
+   * AI重写视频内容（已废弃，使用 rewriteTranscript 替代）
+   */
+  async rewriteVideo(awemeId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+    return this.rewriteTranscript(awemeId, { force_reprocess: forceReprocess });
+  }
 }
+
+
 
 // 创建全局实例
 const douyinService = new DouyinService();

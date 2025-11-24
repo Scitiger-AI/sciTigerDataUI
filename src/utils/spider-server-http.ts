@@ -135,13 +135,13 @@ class SpiderServerHttpClient {
     }
 
     // POST 请求
-    async post<T>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<HttpResponse<T>> {
-        return this.makeRequest<T>(endpoint, { method: 'POST', body, headers });
+    async post<T>(endpoint: string, body?: any, headers?: Record<string, string>, params?: Record<string, any>): Promise<HttpResponse<T>> {
+        return this.makeRequest<T>(endpoint, { method: 'POST', body, headers, params });
     }
 
     // PUT 请求
-    async put<T>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<HttpResponse<T>> {
-        return this.makeRequest<T>(endpoint, { method: 'PUT', body, headers });
+    async put<T>(endpoint: string, body?: any, headers?: Record<string, string>, params?: Record<string, any>): Promise<HttpResponse<T>> {
+        return this.makeRequest<T>(endpoint, { method: 'PUT', body, headers, params });
     }
 
     // DELETE 请求
@@ -150,8 +150,8 @@ class SpiderServerHttpClient {
     }
 
     // PATCH 请求
-    async patch<T>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<HttpResponse<T>> {
-        return this.makeRequest<T>(endpoint, { method: 'PATCH', body, headers });
+    async patch<T>(endpoint: string, body?: any, headers?: Record<string, string>, params?: Record<string, any>): Promise<HttpResponse<T>> {
+        return this.makeRequest<T>(endpoint, { method: 'PATCH', body, headers, params });
     }
 }
 

@@ -150,16 +150,16 @@ async function proxyRequest(
                 response = await spiderServerHttp.get(apiPath, params);
                 break;
             case 'POST':
-                response = await spiderServerHttp.post(apiPath, body, headers);
+                response = await spiderServerHttp.post(apiPath, body, headers, params);
                 break;
             case 'PUT':
-                response = await spiderServerHttp.put(apiPath, body, headers);
+                response = await spiderServerHttp.put(apiPath, body, headers, params);
                 break;
             case 'DELETE':
                 response = await spiderServerHttp.delete(apiPath, params, headers);
                 break;
             case 'PATCH':
-                response = await spiderServerHttp.patch(apiPath, body, headers);
+                response = await spiderServerHttp.patch(apiPath, body, headers, params);
                 break;
             default:
                 throw new Error(`Unsupported method: ${method}`);

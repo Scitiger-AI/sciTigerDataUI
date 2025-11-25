@@ -8,7 +8,8 @@ import {
   YoutubeOutlined,
   PlaySquareOutlined,
   FireOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
+  UserOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import LogoIcon from '@/components/ui/LogoIcon';
@@ -64,6 +65,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     getItem('B站', 'bilibili', <YoutubeOutlined />),
     getItem('小红书', 'xiaohongshu', <FireOutlined />),
     getItem('知乎', 'zhihu', <QuestionCircleOutlined />),
+    { type: 'divider' } as MenuItem,
+    getItem('账号管理', 'accounts', <UserOutlined />),
   ];
 
   const menuStyle = css`

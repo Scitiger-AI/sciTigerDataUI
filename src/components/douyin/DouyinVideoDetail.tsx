@@ -32,6 +32,8 @@ import {
 import type { DouyinVideo, DouyinComment } from '@/types/douyin';
 import douyinService from '@/services/douyin';
 import VideoTranscriptCard from './VideoTranscriptCard';
+import CreateVideoCommentTaskModal from './CreateVideoCommentTaskModal';
+import CommentItem from './CommentItem';
 import { App } from 'antd';
 
 const { Text, Paragraph, Title } = Typography;
@@ -96,6 +98,9 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
   const commentsContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null); // 视频元素引用,用于时间轴同步
 
+  // 🆕 任务创建弹窗状态
+  const [createTaskModalVisible, setCreateTaskModalVisible] = useState(false);
+
   // 加载评论
   const loadComments = useCallback(
     async (page: number = 1, append: boolean = false) => {
@@ -107,6 +112,7 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
           aweme_id: video.aweme_id,
           page,
           page_size: 50,
+          parent_only: true,  // 🆕 只加载一级评论
         });
 
         if (response.success && response.data) {
@@ -196,6 +202,15 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
                       </Text>
                       {video.downloaded_videos && video.downloaded_videos.length > 0 && (
                         <Tag color="green">已下载</Tag>
+                      )}
+                      {video.transcript_info?.has_transcript && (
+                        <Tag color="blue">已提取</Tag>
+                      )}
+                      {video.denoised_transcript?.has_denoised && (
+                        <Tag color="cyan">已去噪</Tag>
+                      )}
+                      {video.rewritten_transcript?.has_rewritten && (
+                        <Tag color="purple">已重写</Tag>
                       )}
                     </Space>
                   </Descriptions.Item>
@@ -462,6 +477,16 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
               size="small"
               style={{ maxHeight: '600px', display: 'flex', flexDirection: 'column' }}
               styles={{ body: { flex: 1, overflow: 'hidden', padding: 0 } }}
+              extra={
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<CommentOutlined />}
+                  onClick={() => setCreateTaskModalVisible(true)}
+                >
+                  采集更多评论
+                </Button>
+              }
             >
               <div
                 ref={commentsContainerRef}
@@ -479,61 +504,14 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
                   <Empty description="暂无评论" />
                 ) : (
                   <>
-                    <List
-                      dataSource={comments}
-                      renderItem={(comment) => (
-                        <List.Item style={{ padding: '12px 0', borderBottom: '1px solid #f0f0f0' }}>
-                          <List.Item.Meta
-                            avatar={
-                              <Avatar
-                                src={comment.avatar || comment.avatar_thumb}
-                                icon={<UserOutlined />}
-                              />
-                            }
-                            title={
-                              <Space>
-                                <Text strong>{comment.nickname}</Text>
-                                {comment.ip_location && (
-                                  <Text type="secondary" style={{ fontSize: 12 }}>
-                                    {comment.ip_location}
-                                  </Text>
-                                )}
-                              </Space>
-                            }
-                            description={
-                              <>
-                                <div style={{ marginBottom: 8, marginTop: 8 }}>
-                                  {comment.content}
-                                </div>
-                                <Space size="small">
-                                  <Text type="secondary" style={{ fontSize: 12 }}>
-                                    {formatTime(comment.create_time)}
-                                  </Text>
-                                  <Text type="secondary" style={{ fontSize: 12 }}>
-                                    <HeartOutlined style={{ marginRight: 4 }} />
-                                    {formatNumber(
-                                      comment.like_count ?? comment.digg_count ?? 0
-                                    )}
-                                  </Text>
-                                  {(comment.sub_comment_count ||
-                                    comment.reply_comment_total) && (
-                                      <Text type="secondary" style={{ fontSize: 12 }}>
-                                        <CommentOutlined style={{ marginRight: 4 }} />
-                                        {formatNumber(
-                                          comment.sub_comment_count ??
-                                          comment.reply_comment_total ??
-                                          0
-                                        )}{' '}
-                                        条回复
-                                      </Text>
-                                    )}
-                                </Space>
-                              </>
-                            }
-                          />
-                        </List.Item>
-                      )}
-                    />
+                    {comments.map((comment) => (
+                      <CommentItem
+                        key={comment.comment_id}
+                        comment={comment}
+                        level={1}
+                        showReplies={true}
+                      />
+                    ))}
                     {commentsLoading && comments.length > 0 && (
                       <div style={{ textAlign: 'center', padding: 16 }}>
                         <Spin size="small" />
@@ -563,6 +541,18 @@ const DouyinVideoDetail: React.FC<DouyinVideoDetailProps> = ({
           />
         </Col>
       </Row>
+
+      {/* 🆕 创建评论采集任务弹窗 */}
+      <CreateVideoCommentTaskModal
+        visible={createTaskModalVisible}
+        video={video}
+        onCancel={() => setCreateTaskModalVisible(false)}
+        onSuccess={() => {
+          message.success('任务创建成功,将开始采集更多评论');
+          // 可以选择刷新评论列表或跳转到任务列表
+          // loadComments(1, false);
+        }}
+      />
     </div>
   );
 };

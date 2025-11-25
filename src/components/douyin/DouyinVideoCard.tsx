@@ -129,6 +129,39 @@ export const DouyinVideoCard: React.FC<DouyinVideoCardProps> = ({
             <div
               style={{
                 position: 'absolute',
+                top: 8,
+                right: 8,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                alignItems: 'flex-end',
+                zIndex: 1,
+              }}
+            >
+              {video.downloaded_videos && video.downloaded_videos.length > 0 && (
+                <Tag color="green" style={{ margin: 0, fontSize: '10px', lineHeight: '16px', height: '18px', padding: '0 4px', border: 'none' }}>
+                  已下载
+                </Tag>
+              )}
+              {video.transcript_info?.has_transcript && (
+                <Tag color="blue" style={{ margin: 0, fontSize: '10px', lineHeight: '16px', height: '18px', padding: '0 4px', border: 'none' }}>
+                  已提取
+                </Tag>
+              )}
+              {video.denoised_transcript?.has_denoised && (
+                <Tag color="cyan" style={{ margin: 0, fontSize: '10px', lineHeight: '16px', height: '18px', padding: '0 4px', border: 'none' }}>
+                  已去噪
+                </Tag>
+              )}
+              {video.rewritten_transcript?.has_rewritten && (
+                <Tag color="purple" style={{ margin: 0, fontSize: '10px', lineHeight: '16px', height: '18px', padding: '0 4px', border: 'none' }}>
+                  已重写
+                </Tag>
+              )}
+            </div>
+            <div
+              style={{
+                position: 'absolute',
                 top: 0,
                 left: 0,
                 right: 0,
@@ -196,11 +229,6 @@ export const DouyinVideoCard: React.FC<DouyinVideoCardProps> = ({
               <Tag color="red" style={{ fontSize: '11px' }}>
                 视频
               </Tag>
-              {video.downloaded_videos && video.downloaded_videos.length > 0 && (
-                <Tag color="green" style={{ fontSize: '11px' }}>
-                  已下载
-                </Tag>
-              )}
             </div>
             {video.user_signature && (
               <div style={{ minHeight: '16px', display: 'flex', alignItems: 'center' }}>

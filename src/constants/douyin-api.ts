@@ -19,6 +19,7 @@ export const DOUYIN_API_ENDPOINTS = {
   VIDEOS: '/videos',
   VIDEO_DETAIL: (awemeId: string) => `/videos/${awemeId}`,
   VIDEO_COMMENTS: (awemeId: string) => `/videos/${awemeId}/comments`,
+  COMMENT_REPLIES: (commentId: string) => `/videos/comments/${commentId}/replies`,  // 🆕 获取评论回复
   VIDEO_DELETE: (awemeId: string) => `/videos/${awemeId}`,
   VIDEO_DOWNLOAD: (awemeId: string) => `/videos/${awemeId}/download`,
 

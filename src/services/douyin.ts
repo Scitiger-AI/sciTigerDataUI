@@ -77,6 +77,31 @@ class DouyinService {
   }
 
   /**
+   * 获取评论的回复列表（二级评论）
+   */
+  async getCommentReplies(
+    commentId: string,
+    page: number = 1,
+    pageSize: number = 20,
+    sort: 'hot' | 'time' = 'time'
+  ): Promise<BaseResponse<PaginatedResponse<DouyinComment>>> {
+    try {
+      const response = await douyinHttp.get<BaseResponse<PaginatedResponse<DouyinComment>>>(
+        DOUYIN_API_ENDPOINTS.COMMENT_REPLIES(commentId),
+        {
+          page,
+          page_size: pageSize,
+          sort,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('获取评论回复失败:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 下载视频
    */
   async downloadVideo(awemeId: string): Promise<BaseResponse<DouyinVideo>> {

@@ -227,6 +227,57 @@ export const DouyinTaskDetail: React.FC<DouyinTaskDetailProps> = ({
         )}
       </Descriptions>
 
+      {task.post_processing_config && (
+        <Descriptions
+          title="后处理配置"
+          bordered
+          column={2}
+          size="small"
+          style={{ marginTop: '24px' }}
+        >
+          <Descriptions.Item label="启用状态" span={2}>
+            <Space>
+              <Text>后处理:</Text>
+              {task.post_processing_config.enabled ? <Tag color="green">启用</Tag> : <Tag>禁用</Tag>}
+            </Space>
+          </Descriptions.Item>
+
+          {task.post_processing_config.enabled && (
+            <>
+              <Descriptions.Item label="处理功能" span={2}>
+                <Space wrap>
+                  <Tag color={task.post_processing_config.extract_transcript ? "blue" : "default"}>
+                    提取文案 {task.post_processing_config.extract_transcript ? "✓" : "✗"}
+                  </Tag>
+                  <Tag color={task.post_processing_config.denoise_transcript ? "cyan" : "default"}>
+                    内容去噪 {task.post_processing_config.denoise_transcript ? "✓" : "✗"}
+                  </Tag>
+                  <Tag color={task.post_processing_config.rewrite_transcript ? "purple" : "default"}>
+                    内容重写 {task.post_processing_config.rewrite_transcript ? "✓" : "✗"}
+                  </Tag>
+                </Space>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="重写风格">
+                <Tag>{task.post_processing_config.rewrite_style || 'natural'}</Tag>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="强制重处理">
+                {task.post_processing_config.force_reprocess ? <Tag color="orange">是</Tag> : <Tag>否</Tag>}
+              </Descriptions.Item>
+
+              <Descriptions.Item label="批量大小">
+                <Text>{task.post_processing_config.batch_size}</Text>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="并发限制">
+                <Text>{task.post_processing_config.concurrent_limit}</Text>
+              </Descriptions.Item>
+            </>
+          )}
+        </Descriptions>
+      )}
+
       {/* 执行信息 */}
       <Descriptions
         title="执行信息"

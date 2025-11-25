@@ -157,11 +157,11 @@ function DouyinPageContent() {
 
   // ============ 视频相关函数 ============
 
-  const loadVideos = useCallback(async (append = false) => {
+  const loadVideos = useCallback(async (append = false, keyword?: string) => {
     setVideosLoading(true);
     try {
       const query: DouyinVideoQuery = {
-        keyword: videoKeyword || undefined,
+        keyword: keyword !== undefined ? keyword : (videoKeyword || undefined),
         sort_by: videoSortBy,
         sort_order: videoSortOrder,
         page: append ? videosPage + 1 : 1,
@@ -187,7 +187,9 @@ function DouyinPageContent() {
   const handleVideoSearch = useCallback((value: string) => {
     setVideoKeyword(value);
     setVideosPage(1);
-  }, []);
+    // 直接使用新的 keyword 值触发搜索
+    loadVideos(false, value);
+  }, [loadVideos]);
 
   const handleViewVideoDetail = useCallback((video: DouyinVideo) => {
     // 从视频列表进入详情页,不携带 from 参数,返回时会回到视频列表
@@ -260,11 +262,11 @@ function DouyinPageContent() {
 
   // ============ 创作者相关函数 ============
 
-  const loadCreators = useCallback(async (append = false) => {
+  const loadCreators = useCallback(async (append = false, keyword?: string) => {
     setCreatorsLoading(true);
     try {
       const query: DouyinCreatorQuery = {
-        keyword: creatorKeyword || undefined,
+        keyword: keyword !== undefined ? keyword : (creatorKeyword || undefined),
         sort_by: creatorSortBy,
         sort_order: creatorSortOrder,
         page: append ? creatorsPage + 1 : 1,
@@ -286,6 +288,13 @@ function DouyinPageContent() {
       setCreatorsLoading(false);
     }
   }, [creatorKeyword, creatorSortBy, creatorSortOrder, creatorsPage, creators, message]);
+
+  const handleCreatorSearch = useCallback((value: string) => {
+    setCreatorKeyword(value);
+    setCreatorsPage(1);
+    // 直接使用新的 keyword 值触发搜索
+    loadCreators(false, value);
+  }, [loadCreators]);
 
   const handleCreateCreator = useCallback(async (values: any) => {
     setCreatorCreating(true);
@@ -367,11 +376,11 @@ function DouyinPageContent() {
 
   // ============ 任务相关函数 ============
 
-  const loadTasks = useCallback(async (append = false) => {
+  const loadTasks = useCallback(async (append = false, keyword?: string) => {
     setTasksLoading(true);
     try {
       const response = await douyinService.getTasks({
-        keyword: taskKeyword || undefined,
+        keyword: keyword !== undefined ? keyword : (taskKeyword || undefined),
         task_type: taskTypeFilter,
         status: taskStatusFilter,
         schedule_type: taskScheduleTab,
@@ -394,6 +403,13 @@ function DouyinPageContent() {
       setTasksLoading(false);
     }
   }, [taskKeyword, taskTypeFilter, taskStatusFilter, taskScheduleTab, taskSortBy, taskSortOrder, tasksPage, tasks, message]);
+
+  const handleTaskSearch = useCallback((value: string) => {
+    setTaskKeyword(value);
+    setTasksPage(1);
+    // 直接使用新的 keyword 值触发搜索
+    loadTasks(false, value);
+  }, [loadTasks]);
 
   const handleCreateTask = useCallback(async (values: any) => {
     setTaskCreating(true);
@@ -423,6 +439,18 @@ function DouyinPageContent() {
         video_format: values.video_format || 'mp4',
       };
 
+      // 构建后处理配置
+      const postProcessingConfig = {
+        enabled: values.post_processing_config?.enabled || false,
+        extract_transcript: values.post_processing_config?.extract_transcript || false,
+        denoise_transcript: values.post_processing_config?.denoise_transcript || false,
+        rewrite_transcript: values.post_processing_config?.rewrite_transcript || false,
+        rewrite_style: values.post_processing_config?.rewrite_style || 'natural',
+        force_reprocess: values.post_processing_config?.force_reprocess || false,
+        batch_size: values.post_processing_config?.batch_size || 10,
+        concurrent_limit: values.post_processing_config?.concurrent_limit || 3,
+      };
+
       if (taskType === 'search') {
         const data: CreateDouyinSearchTaskRequest = {
           name: values.task_name || `搜索任务-${values.keywords}`,
@@ -441,6 +469,7 @@ function DouyinPageContent() {
           enable_resume: values.enable_resume !== false,
           enable_proxy: values.enable_proxy || false,
           media_download_config: mediaDownloadConfig,
+          post_processing_config: postProcessingConfig,
         };
         response = await douyinService.createSearchTask(data);
       } else if (taskType === 'detail') {
@@ -465,6 +494,7 @@ function DouyinPageContent() {
           enable_resume: values.enable_resume !== false,
           enable_proxy: values.enable_proxy || false,
           media_download_config: mediaDownloadConfig,
+          post_processing_config: postProcessingConfig,
         });
       } else if (taskType === 'creator') {
         if (!values.user_id) {
@@ -487,6 +517,7 @@ function DouyinPageContent() {
           enable_resume: values.enable_resume !== false,
           enable_proxy: values.enable_proxy || false,
           media_download_config: mediaDownloadConfig,
+          post_processing_config: postProcessingConfig,
         };
         response = await douyinService.createCreatorTask(data);
       }
@@ -682,7 +713,7 @@ function DouyinPageContent() {
     } else if (viewMode === 'tasks') {
       loadTasks(false);
     }
-  }, [viewMode, videoKeyword, videoSortBy, videoSortOrder, creatorKeyword, creatorSortBy, creatorSortOrder, taskKeyword, taskTypeFilter, taskStatusFilter, taskScheduleTab, taskSortBy, taskSortOrder]);
+  }, [viewMode, videoSortBy, videoSortOrder, creatorSortBy, creatorSortOrder, taskTypeFilter, taskStatusFilter, taskScheduleTab, taskSortBy, taskSortOrder]);
 
   return (
     <MainLayout fullWidth>
@@ -822,6 +853,7 @@ function DouyinPageContent() {
                   size="large"
                   value={creatorKeyword}
                   onChange={(e) => setCreatorKeyword(e.target.value)}
+                  onSearch={handleCreatorSearch}
                 />
               </Col>
               <Col xs={24} sm={6} lg={4}>
@@ -1053,10 +1085,7 @@ function DouyinPageContent() {
                     size="large"
                     value={taskKeyword}
                     onChange={(e) => setTaskKeyword(e.target.value)}
-                    onSearch={() => {
-                      setTasksPage(1);
-                      loadTasks(false);
-                    }}
+                    onSearch={handleTaskSearch}
                   />
                 </Col>
                 <Col xs={12} sm={4} lg={3}>
@@ -1497,6 +1526,16 @@ function DouyinPageContent() {
               max_video_size_mb: 5000,
               image_format: 'jpg',
               video_format: 'mp4',
+              post_processing_config: {
+                enabled: false,
+                extract_transcript: false,
+                denoise_transcript: false,
+                rewrite_transcript: false,
+                rewrite_style: 'natural',
+                force_reprocess: false,
+                batch_size: 10,
+                concurrent_limit: 3,
+              },
             }}
           >
             <Form.Item label="任务类型">
@@ -1582,13 +1621,25 @@ function DouyinPageContent() {
             {/* 搜索任务参数 */}
             {taskType === 'search' && (
               <>
-                <Form.Item
-                  label="搜索关键词"
-                  name="keywords"
-                  rules={[{ required: true, message: '请输入关键词' }]}
-                >
-                  <Input placeholder="请输入搜索关键词，多个用逗号分隔" />
-                </Form.Item>
+                <Row gutter={16}>
+                  <Col span={16}>
+                    <Form.Item
+                      label="搜索关键词"
+                      name="keywords"
+                      rules={[{ required: true, message: '请输入关键词' }]}
+                    >
+                      <Input placeholder="请输入搜索关键词，多个用逗号分隔" />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item
+                      label="起始页码"
+                      name="start_page"
+                    >
+                      <InputNumber min={1} style={{ width: '100%' }} />
+                    </Form.Item>
+                  </Col>
+                </Row>
                 <Row gutter={16}>
                   <Col span={12}>
                     <Form.Item
@@ -1607,12 +1658,6 @@ function DouyinPageContent() {
                     </Form.Item>
                   </Col>
                 </Row>
-                <Form.Item
-                  label="起始页码"
-                  name="start_page"
-                >
-                  <InputNumber min={1} style={{ width: '100%' }} />
-                </Form.Item>
               </>
             )}
 
@@ -1687,93 +1732,116 @@ function DouyinPageContent() {
 
             <Divider orientation="left">评论配置</Divider>
 
-            <Form.Item
-              label="采集评论"
-              name="enable_comments"
-              valuePropName="checked"
-            >
-              <Switch />
-            </Form.Item>
-
             <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.enable_comments !== currentValues.enable_comments}>
-              {({ getFieldValue }) =>
-                getFieldValue('enable_comments') ? (
-                  <>
-                    <Form.Item
-                      label="每个视频最大评论数"
-                      name="max_comments_per_video"
-                    >
-                      <InputNumber min={0} max={500} style={{ width: '100%' }} />
-                    </Form.Item>
-                    <Form.Item
-                      label="采集二级评论"
-                      name="include_sub_comments"
-                      valuePropName="checked"
-                    >
-                      <Switch />
-                    </Form.Item>
-                    <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.include_sub_comments !== currentValues.include_sub_comments}>
-                      {({ getFieldValue }) =>
-                        getFieldValue('include_sub_comments') ? (
-                          <Form.Item
-                            label="每条一级评论最多二级评论数"
-                            name="max_sub_per_comment"
-                          >
-                            <InputNumber min={0} max={50} style={{ width: '100%' }} />
-                          </Form.Item>
-                        ) : null
-                      }
-                    </Form.Item>
-                    <Form.Item
-                      label="评论排序方式"
-                      name="comment_sort_by"
-                    >
-                      <Select options={[...DOUYIN_COMMENT_SORT_OPTIONS]} />
-                    </Form.Item>
-                  </>
-                ) : null
-              }
+              {({ getFieldValue }) => (
+                <>
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Form.Item
+                        label="采集评论"
+                        name="enable_comments"
+                        valuePropName="checked"
+                      >
+                        <Switch />
+                      </Form.Item>
+                    </Col>
+                    {getFieldValue('enable_comments') && (
+                      <Col span={12}>
+                        <Form.Item
+                          label="每个视频最大评论数"
+                          name="max_comments_per_video"
+                        >
+                          <InputNumber min={0} max={500} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </Col>
+                    )}
+                  </Row>
+                  {getFieldValue('enable_comments') && (
+                    <>
+                      <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.include_sub_comments !== currentValues.include_sub_comments}>
+                        {({ getFieldValue: getSubFieldValue }) => (
+                          <Row gutter={16}>
+                            <Col span={12}>
+                              <Form.Item
+                                label="采集二级评论"
+                                name="include_sub_comments"
+                                valuePropName="checked"
+                              >
+                                <Switch />
+                              </Form.Item>
+                            </Col>
+                            {getSubFieldValue('include_sub_comments') && (
+                              <Col span={12}>
+                                <Form.Item
+                                  label="每条一级评论最多二级评论数"
+                                  name="max_sub_per_comment"
+                                >
+                                  <InputNumber min={0} max={50} style={{ width: '100%' }} />
+                                </Form.Item>
+                              </Col>
+                            )}
+                          </Row>
+                        )}
+                      </Form.Item>
+                      <Form.Item
+                        label="评论排序方式"
+                        name="comment_sort_by"
+                      >
+                        <Select options={[...DOUYIN_COMMENT_SORT_OPTIONS]} />
+                      </Form.Item>
+                    </>
+                  )}
+                </>
+              )}
             </Form.Item>
 
-            <Divider orientation="left">存储配置</Divider>
+            <Divider orientation="left">存储与代理配置</Divider>
 
-            <Form.Item
-              label="启用断点续爬"
-              name="enable_resume"
-              valuePropName="checked"
-              tooltip="任务中断后可以从中断处继续采集"
-            >
-              <Switch />
-            </Form.Item>
-
-            <Divider orientation="left">代理配置</Divider>
-
-            <Form.Item
-              label="启用代理"
-              name="enable_proxy"
-              valuePropName="checked"
-              tooltip="是否使用代理进行采集"
-            >
-              <Switch />
-            </Form.Item>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label="启用断点续爬"
+                  name="enable_resume"
+                  valuePropName="checked"
+                  tooltip="任务中断后可以从中断处继续采集"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label="启用代理"
+                  name="enable_proxy"
+                  valuePropName="checked"
+                  tooltip="是否使用代理进行采集"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
 
             <Divider orientation="left">媒体下载配置</Divider>
 
-            <Form.Item
-              label="下载图片"
-              name="download_images"
-              valuePropName="checked"
-            >
-              <Switch />
-            </Form.Item>
-
-            <Form.Item
-              label="下载视频"
-              name="download_videos"
-              valuePropName="checked"
-            >
-              <Switch />
-            </Form.Item>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  label="下载图片"
+                  name="download_images"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label="下载视频"
+                  name="download_videos"
+                  valuePropName="checked"
+                >
+                  <Switch />
+                </Form.Item>
+              </Col>
+            </Row>
 
             <Form.Item
               label="保存路径"
@@ -1820,6 +1888,103 @@ function DouyinPageContent() {
                 </Form.Item>
               </Col>
             </Row>
+
+            <Divider orientation="left">后处理配置</Divider>
+
+            <Form.Item
+              label="启用后处理"
+              name={['post_processing_config', 'enabled']}
+              valuePropName="checked"
+              tooltip="是否在采集完成后自动进行视频内容处理"
+            >
+              <Switch />
+            </Form.Item>
+
+            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) =>
+              prevValues.post_processing_config?.enabled !== currentValues.post_processing_config?.enabled
+            }>
+              {({ getFieldValue }) =>
+                getFieldValue(['post_processing_config', 'enabled']) ? (
+                  <>
+                    <Row gutter={16}>
+                      <Col span={6}>
+                        <Form.Item
+                          label="提取视频内容"
+                          name={['post_processing_config', 'extract_transcript']}
+                          valuePropName="checked"
+                          tooltip="是否提取视频中的语音内容"
+                        >
+                          <Switch />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item
+                          label="内容去噪"
+                          name={['post_processing_config', 'denoise_transcript']}
+                          valuePropName="checked"
+                          tooltip="是否对提取的内容进行去噪处理"
+                        >
+                          <Switch />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item
+                          label="内容重写"
+                          name={['post_processing_config', 'rewrite_transcript']}
+                          valuePropName="checked"
+                          tooltip="是否对内容进行重写优化"
+                        >
+                          <Switch />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item
+                          label="强制重新处理"
+                          name={['post_processing_config', 'force_reprocess']}
+                          valuePropName="checked"
+                          tooltip="是否强制重新处理已处理过的视频"
+                        >
+                          <Switch />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    <Form.Item
+                      label="重写风格"
+                      name={['post_processing_config', 'rewrite_style']}
+                      tooltip="内容重写时使用的风格"
+                    >
+                      <Select options={[
+                        { label: '自然风格', value: 'natural' },
+                        { label: '正式风格', value: 'formal' },
+                        { label: '随意风格', value: 'casual' },
+                      ]} />
+                    </Form.Item>
+
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item
+                          label="批量处理大小"
+                          name={['post_processing_config', 'batch_size']}
+                          tooltip="每次批量处理的视频数量"
+                        >
+                          <InputNumber min={1} max={50} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </Col>
+                      <Col span={12}>
+                        <Form.Item
+                          label="并发处理数"
+                          name={['post_processing_config', 'concurrent_limit']}
+                          tooltip="同时处理视频的最大并发数"
+                        >
+                          <InputNumber min={1} max={10} style={{ width: '100%' }} />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </>
+                ) : null
+              }
+            </Form.Item>
           </Form>
         </Modal>
       </div>

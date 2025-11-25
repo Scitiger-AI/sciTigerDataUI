@@ -39,6 +39,24 @@ export interface MediaDownloadConfig {
   video_format?: string;  // 视频保存格式
 }
 
+// 后处理配置
+export interface PostProcessingConfig {
+  enabled: boolean;              // 是否启用后处理
+
+  // 三个开关
+  extract_transcript: boolean;   // 是否提取视频内容（ASR）
+  denoise_transcript: boolean;   // 是否内容去噪
+  rewrite_transcript: boolean;   // 是否内容重写
+
+  // 处理参数
+  rewrite_style: string;         // 重写风格: natural/formal/casual
+  force_reprocess: boolean;      // 是否强制重新处理
+
+  // 批量处理配置
+  batch_size: number;            // 批量处理大小，范围1-50
+  concurrent_limit: number;      // 并发处理数，范围1-10
+}
+
 // 抖音视频内容类型
 export interface DouyinVideo {
   id?: string;
@@ -276,6 +294,7 @@ export interface DouyinTask {
   enable_proxy?: boolean;
   enable_resume?: boolean;
   save_to_mongodb?: boolean;
+  post_processing_config?: PostProcessingConfig;
 
   // 执行状态
   progress: {
@@ -346,6 +365,8 @@ export interface DouyinCommentQuery {
   aweme_id: string;
   page?: number;
   page_size?: number;
+  sort?: 'hot' | 'time';  // 排序方式
+  parent_only?: boolean;  // 🆕 是否只获取一级评论
 }
 
 // 任务列表查询参数
@@ -369,6 +390,9 @@ export interface CreateDouyinSearchTaskRequest {
   max_count?: number;  // 最大采集数量 (1-500)
   start_page?: number;  // 起始页码 (默认1)
 
+  // 后处理配置
+  post_processing_config?: PostProcessingConfig;
+
   // 调度配置
   schedule_type?: DouyinScheduleType;  // 调度类型 (默认immediate)
   scheduled_time?: string;  // 指定执行时间 (schedule_type=once时必填)
@@ -389,6 +413,9 @@ export interface CreateDouyinDetailTaskRequest {
   max_count?: number;  // 最大采集数量 (1-500)
   start_page?: number;  // 起始页码 (默认1)
 
+  // 后处理配置
+  post_processing_config?: PostProcessingConfig;
+
   // 调度配置
   schedule_type?: DouyinScheduleType;  // 调度类型 (默认immediate)
   scheduled_time?: string;  // 指定执行时间 (schedule_type=once时必填)
@@ -408,6 +435,9 @@ export interface CreateDouyinCreatorTaskRequest {
   user_id: string;  // 用户ID（必填）
   max_count?: number;  // 最大采集数量 (1-500)
   start_page?: number;  // 起始页码 (默认1)
+
+  // 后处理配置
+  post_processing_config?: PostProcessingConfig;
 
   // 调度配置
   schedule_type?: DouyinScheduleType;  // 调度类型 (默认immediate)

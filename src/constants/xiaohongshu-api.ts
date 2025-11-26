@@ -1,29 +1,39 @@
-// 小红书API配置
+// 小红书API配置(仅用于服务端API路由)
 export const XHS_API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_XHS_API_BASE_URL || 'http://127.0.0.1:8010',
+  BASE_URL: process.env.SCITIGER_SPIDER_API_BASE_URL || 'http://127.0.0.1:8010',
 } as const;
 
-// 小红书API端点
+// 客户端API配置(通过Next.js API路由代理)
+export const XHS_CLIENT_CONFIG = {
+  BASE_URL: '/api/xiaohongshu', // 使用本地API路由
+} as const;
+
+// 小红书API端点(相对于 /api/xiaohongshu 代理路由)
 export const XHS_API_ENDPOINTS = {
   // 任务管理
-  TASKS: '/api/v1/xiaohongshu/tasks',
-  TASK_DETAIL: (taskId: string) => `/api/v1/xiaohongshu/tasks/${taskId}`,
-  TASK_RESULTS: (taskId: string) => `/api/v1/xiaohongshu/tasks/results/${taskId}`,
+  TASKS: '/tasks',
+  TASK_DETAIL: (taskId: string) => `/tasks/${taskId}`,
+  TASK_RESULTS: (taskId: string) => `/tasks/${taskId}/results`,
+  TASK_DELETE: (taskId: string) => `/tasks/${taskId}`,
+  TASK_CANCEL: (taskId: string) => `/tasks/${taskId}/cancel`,
 
   // 笔记管理
-  ARTICLES: '/api/v1/xiaohongshu/articles',
-  ARTICLE_DETAIL: (noteId: string) => `/api/v1/xiaohongshu/articles/${noteId}`,
-  ARTICLE_COMMENTS: (noteId: string) => `/api/v1/xiaohongshu/articles/${noteId}/comments`,
+  ARTICLES: '/articles',
+  ARTICLE_DETAIL: (noteId: string) => `/articles/${noteId}`,
+  ARTICLE_COMMENTS: (noteId: string) => `/articles/${noteId}/comments`,
+  ARTICLE_DELETE: (noteId: string) => `/articles/${noteId}`,
+  ARTICLE_DOWNLOAD: (noteId: string) => `/articles/${noteId}/download`,
 
   // 创作者管理
-  CREATORS: '/api/v1/xiaohongshu/creators',
-  CREATOR_CREATE: '/api/v1/xiaohongshu/creators',
-  CREATOR_DETAIL: (userId: string) => `/api/v1/xiaohongshu/creators/${userId}`,
+  CREATORS: '/creators',
+  CREATOR_CREATE: '/creators',
+  CREATOR_DETAIL: (userId: string) => `/creators/${userId}`,
+  CREATOR_DELETE: (userId: string) => `/creators/${userId}`,
 
-  // AI 功能（预留）
-  ARTICLE_EXTRACT: (noteId: string) => `/api/v1/xiaohongshu/articles/${noteId}/extract`,
-  ARTICLE_DENOISE: (noteId: string) => `/api/v1/xiaohongshu/articles/${noteId}/denoise`,
-  ARTICLE_REWRITE: (noteId: string) => `/api/v1/xiaohongshu/articles/${noteId}/rewrite`,
+  // AI 功能
+  ARTICLE_EXTRACT: (noteId: string) => `/articles/${noteId}/extract`,
+  ARTICLE_DENOISE: (noteId: string) => `/articles/${noteId}/denoise`,
+  ARTICLE_REWRITE: (noteId: string) => `/articles/${noteId}/rewrite`,
 } as const;
 
 // 默认分页配置

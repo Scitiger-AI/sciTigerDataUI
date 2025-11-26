@@ -11,9 +11,10 @@ import type {
   XhsCreatorQuery,
   XhsCommentQuery,
   XhsTaskQuery,
-  CreateXhsSearchTaskRequest,
-  CreateXhsDetailTaskRequest,
-  CreateXhsCreatorTaskRequest,
+  CreateXhsTaskRequest,
+  NoteContentInfo,
+  XhsNoteDenoiseRequest,
+  XhsNoteRewriteRequest,
 } from '@/types/xiaohongshu';
 
 class XiaohongshuService {
@@ -67,6 +68,66 @@ class XiaohongshuService {
     }
   }
 
+  /**
+   * 删除笔记
+   */
+  async deleteNote(
+    noteId: string,
+    options: {
+      delete_comments?: boolean;
+      delete_files?: boolean;
+    } = {}
+  ): Promise<BaseResponse<{
+    note_id: string;
+    deleted_comments_count: number;
+    comments_deleted: boolean;
+    deleted_files_count: number;
+    failed_files: Array<{ path: string; error: string }>;
+    files_deleted: boolean;
+  }>> {
+    try {
+      const params: Record<string, any> = {};
+      if (options.delete_comments !== undefined) {
+        params.delete_comments = options.delete_comments;
+      }
+      if (options.delete_files !== undefined) {
+        params.delete_files = options.delete_files;
+      }
+
+      const response = await xhsHttp.delete<BaseResponse<{
+        note_id: string;
+        deleted_comments_count: number;
+        comments_deleted: boolean;
+        deleted_files_count: number;
+        failed_files: Array<{ path: string; error: string }>;
+        files_deleted: boolean;
+      }>>(
+        XHS_API_ENDPOINTS.ARTICLE_DELETE(noteId),
+        params
+      );
+      return response.data;
+    } catch (error) {
+      console.error('删除笔记失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 下载笔记内容
+   */
+  async downloadNote(noteId: string): Promise<BaseResponse<NoteContentInfo>> {
+    try {
+      const response = await xhsHttp.post<BaseResponse<NoteContentInfo>>(
+        XHS_API_ENDPOINTS.ARTICLE_DOWNLOAD(noteId),
+        {}
+      );
+      return response.data;
+    } catch (error) {
+      console.error('下载笔记失败:', error);
+      throw error;
+    }
+  }
+
   // ============ 创作者相关 ============
 
   /**
@@ -103,7 +164,7 @@ class XiaohongshuService {
   /**
    * 创建/导入创作者
    */
-  async createCreator(data: CreateXhsCreatorTaskRequest): Promise<BaseResponse<XhsCreator>> {
+  async createCreator(data: any): Promise<BaseResponse<XhsCreator>> {
     try {
       const response = await xhsHttp.post<BaseResponse<XhsCreator>>(
         XHS_API_ENDPOINTS.CREATOR_CREATE,
@@ -116,28 +177,52 @@ class XiaohongshuService {
     }
   }
 
-  // ============ 任务相关 ============
-
   /**
-   * 创建搜索任务
+   * 删除创作者
    */
-  async createSearchTask(data: CreateXhsSearchTaskRequest): Promise<BaseResponse<XhsTask>> {
+  async deleteCreator(
+    userId: string,
+    options: {
+      delete_notes?: boolean;
+    } = {}
+  ): Promise<BaseResponse<{
+    user_id: string;
+    deleted_notes_count: number;
+    deleted_comments_count: number;
+    deleted_files_count: number;
+    failed_files: Array<{ path: string; error: string }>;
+    notes_deleted: boolean;
+  }>> {
     try {
-      const response = await xhsHttp.post<BaseResponse<XhsTask>>(
-        XHS_API_ENDPOINTS.TASKS,
-        data
+      const params: Record<string, any> = {};
+      if (options.delete_notes !== undefined) {
+        params.delete_notes = options.delete_notes;
+      }
+
+      const response = await xhsHttp.delete<BaseResponse<{
+        user_id: string;
+        deleted_notes_count: number;
+        deleted_comments_count: number;
+        deleted_files_count: number;
+        failed_files: Array<{ path: string; error: string }>;
+        notes_deleted: boolean;
+      }>>(
+        XHS_API_ENDPOINTS.CREATOR_DELETE(userId),
+        params
       );
       return response.data;
     } catch (error) {
-      console.error('创建搜索任务失败:', error);
+      console.error('删除创作者失败:', error);
       throw error;
     }
   }
 
+  // ============ 任务相关 ============
+
   /**
-   * 创建详情任务
+   * 创建任务（统一接口）
    */
-  async createDetailTask(data: CreateXhsDetailTaskRequest): Promise<BaseResponse<XhsTask>> {
+  async createTask(data: CreateXhsTaskRequest): Promise<BaseResponse<XhsTask>> {
     try {
       const response = await xhsHttp.post<BaseResponse<XhsTask>>(
         XHS_API_ENDPOINTS.TASKS,
@@ -145,7 +230,7 @@ class XiaohongshuService {
       );
       return response.data;
     } catch (error) {
-      console.error('创建详情任务失败:', error);
+      console.error('创建任务失败:', error);
       throw error;
     }
   }
@@ -169,7 +254,7 @@ class XiaohongshuService {
   /**
    * 获取任务详情
    */
-  async getTaskDetail(taskId: string): Promise<BaseResponse<XhsTask>> {
+  async getTask(taskId: string): Promise<BaseResponse<XhsTask>> {
     try {
       const response = await xhsHttp.get<BaseResponse<XhsTask>>(
         XHS_API_ENDPOINTS.TASK_DETAIL(taskId)
@@ -179,6 +264,13 @@ class XiaohongshuService {
       console.error('获取任务详情失败:', error);
       throw error;
     }
+  }
+
+  /**
+   * 获取任务详情（别名，兼容旧代码）
+   */
+  async getTaskDetail(taskId: string): Promise<BaseResponse<XhsTask>> {
+    return this.getTask(taskId);
   }
 
   /**
@@ -201,32 +293,75 @@ class XiaohongshuService {
     }
   }
 
-  // ============ AI 功能（预留）============
-
   /**
-   * AI提取笔记文案（预留）
+   * 删除任务
    */
-  async extractNote(noteId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+  async deleteTask(
+    taskId: string,
+    options: {
+      delete_results?: boolean;
+    } = {}
+  ): Promise<BaseResponse<{
+    task_id: string;
+    task_deleted_via_api: boolean;
+    api_error: string | null;
+    deleted_notes_count: number;
+    deleted_comments_count: number;
+    results_deleted: boolean;
+  }>> {
     try {
-      const response = await xhsHttp.post<BaseResponse<any>>(
-        XHS_API_ENDPOINTS.ARTICLE_EXTRACT(noteId),
-        { force_reprocess: forceReprocess }
+      const params: Record<string, any> = {};
+      if (options.delete_results !== undefined) {
+        params.delete_results = options.delete_results;
+      }
+
+      const response = await xhsHttp.delete<BaseResponse<{
+        task_id: string;
+        task_deleted_via_api: boolean;
+        api_error: string | null;
+        deleted_notes_count: number;
+        deleted_comments_count: number;
+        results_deleted: boolean;
+      }>>(
+        XHS_API_ENDPOINTS.TASK_DELETE(taskId),
+        params
       );
       return response.data;
     } catch (error) {
-      console.error('提取笔记文案失败:', error);
+      console.error('删除任务失败:', error);
       throw error;
     }
   }
 
   /**
-   * AI去噪笔记内容（预留）
+   * 取消任务
    */
-  async denoiseNote(noteId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+  async cancelTask(taskId: string): Promise<BaseResponse<XhsTask>> {
     try {
-      const response = await xhsHttp.post<BaseResponse<any>>(
-        XHS_API_ENDPOINTS.ARTICLE_DENOISE(noteId),
-        { force_reprocess: forceReprocess }
+      const response = await xhsHttp.post<BaseResponse<XhsTask>>(
+        XHS_API_ENDPOINTS.TASK_CANCEL(taskId),
+        {}
+      );
+      return response.data;
+    } catch (error) {
+      console.error('取消任务失败:', error);
+      throw error;
+    }
+  }
+
+  // ============ AI 功能 ============
+
+  /**
+   * AI去噪笔记内容
+   */
+  async denoiseNote(request: XhsNoteDenoiseRequest): Promise<BaseResponse<NoteContentInfo>> {
+    try {
+      const response = await xhsHttp.post<BaseResponse<NoteContentInfo>>(
+        XHS_API_ENDPOINTS.ARTICLE_DENOISE(request.note_id),
+        {
+          force_reprocess: request.force_reprocess,
+          save_to_file: request.save_to_file
+        }
       );
       return response.data;
     } catch (error) {
@@ -236,13 +371,17 @@ class XiaohongshuService {
   }
 
   /**
-   * AI重写笔记内容（预留）
+   * AI重写笔记内容
    */
-  async rewriteNote(noteId: string, forceReprocess: boolean = false): Promise<BaseResponse<any>> {
+  async rewriteNote(request: XhsNoteRewriteRequest): Promise<BaseResponse<NoteContentInfo>> {
     try {
-      const response = await xhsHttp.post<BaseResponse<any>>(
-        XHS_API_ENDPOINTS.ARTICLE_REWRITE(noteId),
-        { force_reprocess: forceReprocess, auto_denoise: true }
+      const response = await xhsHttp.post<BaseResponse<NoteContentInfo>>(
+        XHS_API_ENDPOINTS.ARTICLE_REWRITE(request.note_id),
+        {
+          force_reprocess: request.force_reprocess,
+          save_to_file: request.save_to_file,
+          auto_denoise: request.auto_denoise
+        }
       );
       return response.data;
     } catch (error) {

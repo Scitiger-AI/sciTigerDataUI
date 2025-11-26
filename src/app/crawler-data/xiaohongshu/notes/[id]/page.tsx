@@ -1,0 +1,243 @@
+"use client";
+
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import {
+  Card,
+  Spin,
+  Typography,
+  Button,
+  Space,
+  App,
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
+import type { XhsNote } from '@/types/xiaohongshu';
+import XhsNoteDetail from '@/components/xiaohongshu/XhsNoteDetail';
+import xiaohongshuService from '@/services/xiaohongshu';
+import MainLayout from '@/layout/MainLayout';
+
+const { Title } = Typography;
+
+function XhsNoteDetailPageContent() {
+  const { message } = App.useApp();
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [note, setNote] = useState<XhsNote | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // 路由参数实际上是 note_id
+  const noteId = params.id as string;
+
+  // 加载笔记详情
+  const loadNoteDetail = useCallback(async () => {
+    try {
+      setLoading(true);
+      // 直接通过 note_id 获取笔记详情
+      try {
+        const detailResponse = await xiaohongshuService.getNoteDetail(noteId);
+        if (detailResponse.success && detailResponse.data) {
+          setNote(detailResponse.data);
+        } else {
+          message.error('获取笔记详情失败');
+        }
+      } catch (detailError: any) {
+        console.error('获取笔记详情失败:', detailError);
+        // 如果直接获取详情失败，尝试从列表中找到
+        let foundNote: XhsNote | null = null;
+        let page = 1;
+        const pageSize = 50;
+
+        while (!foundNote && page <= 10) {
+          try {
+            const listResponse = await xiaohongshuService.getNotes({
+              page,
+              page_size: pageSize,
+            });
+
+            if (listResponse.success && listResponse.data) {
+              foundNote = listResponse.data.items.find((n) => n.note_id === noteId) || null;
+
+              if (foundNote) {
+                setNote(foundNote);
+                break;
+              }
+
+              // 如果当前页没有找到，且还有更多数据，继续搜索
+              if (listResponse.data.items.length < pageSize) {
+                break; // 没有更多数据了
+              }
+              page++;
+            } else {
+              break;
+            }
+          } catch (listError) {
+            console.error('搜索笔记列表失败:', listError);
+            break;
+          }
+        }
+
+        if (!foundNote) {
+          message.error('笔记不存在');
+        }
+      }
+    } catch (error: any) {
+      console.error('加载笔记详情失败:', error);
+      message.error('加载笔记详情失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [noteId, message]);
+
+  // 刷新数据
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await loadNoteDetail();
+      message.success('数据刷新成功');
+    } catch (error) {
+      message.error('数据刷新失败');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // 根据来源决定返回路径
+  const handleGoBack = () => {
+    const from = searchParams.get('from');
+    const creatorId = searchParams.get('creatorId');
+    const taskId = searchParams.get('taskId');
+    const view = searchParams.get('view');
+
+    // 如果来自创作者详情页，返回创作者详情页
+    if (from === 'creator' && creatorId) {
+      router.push(`/crawler-data/xiaohongshu/creators/${creatorId}?view=${view || 'creators'}`);
+    } else if (from === 'task' && taskId) {
+      // 如果来自任务详情页，返回任务详情页
+      router.push(`/crawler-data/xiaohongshu/tasks/${taskId}?view=${view || 'tasks'}`);
+    } else {
+      // 否则返回笔记列表（保留视图状态）
+      const listView = view || 'notes';
+      router.push(`/crawler-data/xiaohongshu?view=${listView}`);
+    }
+  };
+
+  // 动态显示返回按钮文本
+  const from = searchParams.get('from');
+  const backButtonText = from === 'creator'
+    ? '返回创作者详情'
+    : from === 'task'
+      ? '返回任务详情'
+      : '返回列表';
+
+  // 页面初始化
+  useEffect(() => {
+    if (noteId) {
+      loadNoteDetail();
+    }
+  }, [noteId, loadNoteDetail]);
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '400px',
+          }}
+        >
+          <Spin size="large" tip="加载中...">
+            <div style={{ padding: '50px', background: '#f5f5f5', minWidth: '200px' }}>
+              {/* 空内容区域 */}
+            </div>
+          </Spin>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!note) {
+    return (
+      <MainLayout>
+        <div style={{ textAlign: 'center', padding: '50px' }}>
+          <Title level={4}>笔记不存在</Title>
+          <Button type="primary" onClick={handleGoBack}>
+            {backButtonText}
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <div style={{ padding: '24px' }}>
+        {/* 页面头部 */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px',
+            padding: '24px 0',
+          }}
+        >
+          <Space size="middle">
+            <Button icon={<ArrowLeftOutlined />} onClick={handleGoBack}>
+              {backButtonText}
+            </Button>
+            <Title level={3} style={{ margin: 0 }}>
+              {note.title || note.desc || '笔记详情'}
+            </Title>
+          </Space>
+
+          <Space>
+            <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={refreshing}>
+              刷新
+            </Button>
+          </Space>
+        </div>
+
+        {/* 笔记详情 */}
+        <Card>
+          <XhsNoteDetail
+            note={note}
+            loading={false}
+            showActions={true}
+            onRefresh={loadNoteDetail}
+          />
+        </Card>
+      </div>
+    </MainLayout>
+  );
+}
+
+// 导出的主组件，使用 Suspense 包裹
+export default function XhsNoteDetailPage() {
+  return (
+    <Suspense fallback={
+      <MainLayout>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '400px'
+        }}>
+          <Spin size="large" tip="加载中...">
+            <div style={{ padding: '50px', background: '#f5f5f5', minWidth: '200px' }}>
+              {/* 空内容区域 */}
+            </div>
+          </Spin>
+        </div>
+      </MainLayout>
+    }>
+      <XhsNoteDetailPageContent />
+    </Suspense>
+  );
+}

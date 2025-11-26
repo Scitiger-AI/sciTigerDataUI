@@ -1,4 +1,4 @@
-import { XHS_API_CONFIG } from '@/constants/xiaohongshu-api';
+import { XHS_CLIENT_CONFIG } from '@/constants/xiaohongshu-api';
 import { getAccessToken } from '@/utils/storage';
 
 interface HttpRequestOptions {
@@ -16,13 +16,13 @@ interface HttpResponse<T = any> {
 
 /**
  * 小红书HTTP客户端
- * 直接访问sciTigerSpider API
+ * 通过Next.js API路由代理访问sciTigerSpider API
  */
 class XhsHttpClient {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = XHS_API_CONFIG.BASE_URL;
+    this.baseURL = XHS_CLIENT_CONFIG.BASE_URL;
   }
 
   private getDefaultHeaders(): Record<string, string> {

@@ -106,44 +106,131 @@ export type XhsTaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'ca
 // 任务类型
 export type XhsTaskType = 'search' | 'detail' | 'creator';
 
-// 小红书任务
+// 调度类型
+export type ScheduleType = 'immediate' | 'once' | 'cron';
+
+// 排序类型
+export type SortType = 'general' | 'popularity_descending' | 'time_descending';
+
+// Cron 配置
+export interface CronConfig {
+  expression: string; // Cron 表达式，如 "0 9 * * *"
+  timezone?: string; // 时区，默认 "Asia/Shanghai"
+}
+
+// 评论配置
+export interface CommentConfig {
+  enabled: boolean;
+  max_per_note?: number; // 每个笔记最多爬取评论数 (0-1000)
+  fetch_sub_comments?: boolean; // 是否爬取子评论
+}
+
+// 媒体下载配置
+export interface MediaDownloadConfig {
+  enabled: boolean;
+  download_images?: boolean; // 是否下载图片
+  download_videos?: boolean; // 是否下载视频
+  save_path?: string | null; // 保存路径（null 使用默认路径）
+  max_image_size_mb?: number; // 图片最大尺寸 MB (1-500)
+  max_video_size_mb?: number; // 视频最大尺寸 MB (1-5000)
+  image_format?: string; // 图片格式 (jpg/png/webp)
+  video_format?: string; // 视频格式 (mp4/mov)
+}
+
+// ASR 配置
+export interface ASRConfig {
+  enabled: boolean;
+  provider?: string; // ASR 提供商 (whisper/azure/aliyun)
+  language?: string; // 语言 (zh/en)
+  save_to_file?: boolean; // 是否保存为文件
+}
+
+// 去噪配置
+export interface DenoiseConfig {
+  enabled: boolean;
+  save_to_file?: boolean;
+}
+
+// 重写配置
+export interface RewriteConfig {
+  enabled: boolean;
+  save_to_file?: boolean;
+}
+
+// 后处理配置
+export interface PostProcessingConfig {
+  enabled: boolean;
+  asr?: ASRConfig;
+  denoise?: DenoiseConfig;
+  rewrite?: RewriteConfig;
+  extract_keywords?: boolean; // 是否提取关键词
+  auto_classify?: boolean; // 是否自动分类
+}
+
+// 任务进度
+export interface TaskProgress {
+  current: number; // 当前进度
+  total: number; // 总数
+  percentage: number; // 百分比 (0-100)
+}
+
+// 结果摘要
+export interface ResultsSummary {
+  notes_count?: number; // 笔记数量
+  creators_count?: number; // 创作者数量
+  comments_count?: number; // 评论数量
+  images_downloaded?: number; // 下载的图片数量
+  videos_downloaded?: number; // 下载的视频数量
+}
+
+// 小红书任务（完整版）
 export interface XhsTask {
-  task_id: string;
+  id: string; // 任务ID (UUID)
+  name: string; // 任务名称
   task_type: XhsTaskType;
   status: XhsTaskStatus;
+  schedule_type: ScheduleType;
 
   // 搜索任务参数
   keywords?: string;
   max_count?: number;
-  sort?: string;
-  note_type?: number;
+  start_page?: number;
+  sort_type?: SortType;
 
   // 详情任务参数
-  note_ids?: string[];
   note_urls?: string[];
 
   // 创作者任务参数
-  user_id?: string;
-  creator_url?: string;
+  creator_urls?: string[];
 
-  // 评论配置
-  comment_config?: {
-    enabled: boolean;
-    max_per_note?: number;
-  };
+  // 配置项
+  comment_config: CommentConfig;
+  media_download_config: MediaDownloadConfig;
+  post_processing_config: PostProcessingConfig;
+
+  // 调度配置
+  scheduled_time?: string; // ISO 时间字符串（once 模式）
+  cron_config?: CronConfig; // Cron 配置（cron 模式）
+  enable_proxy?: boolean;
+  enable_resume?: boolean;
 
   // 执行信息
-  created_at?: string;
+  user_id?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
   started_at?: string;
   completed_at?: string;
+  last_run_at?: string;
+  next_run_at?: string;
 
-  // 统计信息
-  total_notes?: number;
-  crawled_notes?: number;
-  failed_notes?: number;
-
+  // 进度和结果
+  progress?: TaskProgress;
+  results_summary?: ResultsSummary;
   error_message?: string;
-  progress?: number;
+
+  // SocialDataCollector 关联
+  social_collector_task_id?: string;
 }
 
 // ============ API 请求和响应类型 ============
@@ -196,47 +283,100 @@ export interface XhsCommentQuery {
 // 任务列表查询参数
 export interface XhsTaskQuery {
   status?: XhsTaskStatus;
+  task_type?: XhsTaskType;
+  keyword?: string; // 任务名称关键词搜索
+  sort_by?: string; // 排序字段（created_at/updated_at）
+  sort_order?: 'asc' | 'desc'; // 排序方向
   page?: number;
   page_size?: number;
 }
 
-// 创建搜索任务请求
-export interface CreateXhsSearchTaskRequest {
-  task_type: 'search';
-  keywords: string;
-  max_count?: number;
-  sort?: string;
-  note_type?: number;
-  comment_config?: {
-    enabled: boolean;
-    max_per_note?: number;
-  };
-}
+// 创建任务统一请求类型
+export interface CreateXhsTaskRequest {
+  name: string; // 任务名称（必填）
+  task_type: XhsTaskType;
+  schedule_type?: ScheduleType; // 调度类型（默认 immediate）
 
-// 创建详情任务请求
-export interface CreateXhsDetailTaskRequest {
-  task_type: 'detail';
-  note_ids?: string[];
+  // 搜索任务参数
+  keywords?: string;
+  max_count?: number; // 最大爬取数量 (1-1000)
+  start_page?: number; // 起始页码
+  sort_type?: SortType; // 排序类型
+
+  // 详情任务参数
   note_urls?: string[];
-  comment_config?: {
-    enabled: boolean;
-    max_per_note?: number;
-  };
+
+  // 创作者任务参数
+  creator_urls?: string[];
+
+  // 调度配置
+  scheduled_time?: string; // 定时执行时间（ISO 8601 格式，用于 once 模式）
+  cron_config?: CronConfig; // Cron 配置（用于 cron 模式）
+
+  // 功能配置
+  comment_config?: CommentConfig;
+  media_download_config?: MediaDownloadConfig;
+  post_processing_config?: PostProcessingConfig;
+
+  // 其他配置
+  enable_proxy?: boolean;
+  enable_resume?: boolean;
+  save_to_mongodb?: boolean;
 }
 
-// 创建创作者任务请求
-export interface CreateXhsCreatorTaskRequest {
-  user_id?: string;
-  creator_url?: string;
-  force_refresh?: boolean;
+// ============ 内容处理结果类型 ============
+
+// 去噪元数据
+export interface DenoiseMetadata {
+  model?: string;
+  processing_time?: number;
+  removed_sections?: string[];
+  changes_summary?: string;
 }
 
-// AI 功能请求类型（预留）
-export interface XhsNoteExtractRequest {
-  note_id: string;
-  force_reprocess?: boolean;
+// 去噪后的内容
+export interface DenoisedContent {
+  has_denoised: boolean;
+  denoised_text?: string;
+  ai_denoise_metadata?: DenoiseMetadata;
+  denoised_at?: string;
 }
 
+// 重写元数据
+export interface RewriteMetadata {
+  model?: string;
+  processing_time?: number;
+  original_length?: number;
+  rewritten_length?: number;
+}
+
+// 重写后的内容
+export interface RewrittenContent {
+  has_rewritten: boolean;
+  rewritten_text?: string;
+  rewritten_title?: string;
+  ai_rewrite_metadata?: RewriteMetadata;
+  rewritten_at?: string;
+}
+
+// 笔记内容详情（包含处理结果）
+export interface NoteContentInfo extends XhsNote {
+  // 去噪结果
+  denoised_content?: DenoisedContent;
+
+  // 重写结果
+  rewritten_content?: RewrittenContent;
+
+  // 关键词提取
+  extracted_keywords?: string[];
+  keywords_extracted_at?: string;
+
+  // 自动分类
+  auto_category?: string;
+  classified_at?: string;
+}
+
+// AI 功能请求类型
 export interface XhsNoteDenoiseRequest {
   note_id: string;
   force_reprocess?: boolean;
@@ -251,6 +391,20 @@ export interface XhsNoteRewriteRequest {
 }
 
 // ============ 常量配置 ============
+
+// 调度类型选项
+export const SCHEDULE_TYPE_OPTIONS = [
+  { label: '立即执行', value: 'immediate' as ScheduleType },
+  { label: '定时执行', value: 'once' as ScheduleType },
+  { label: '周期执行', value: 'cron' as ScheduleType },
+] as const;
+
+// 排序类型选项
+export const SORT_TYPE_OPTIONS = [
+  { label: '综合排序', value: 'general' as SortType },
+  { label: '最热排序', value: 'popularity_descending' as SortType },
+  { label: '最新排序', value: 'time_descending' as SortType },
+] as const;
 
 // 笔记类型选项
 export const XHS_NOTE_TYPE_OPTIONS = [
